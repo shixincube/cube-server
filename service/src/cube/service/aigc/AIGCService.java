@@ -70,7 +70,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * AIGC 服务。
  *
- * <p>本类收敛为<b>门面</b>：对上层暴露业务接口，把三类内聚职责委派给独立组件——</p>
+ * <p>本类为<b>门面</b>：对上层暴露业务接口，把三类内聚职责委派给独立组件——</p>
  * <ul>
  *     <li>{@link UnitScheduler}：单元注册、选点与周期维护；</li>
  *     <li>{@link ChannelManager}：频道的创建、查询、保活与回收；</li>

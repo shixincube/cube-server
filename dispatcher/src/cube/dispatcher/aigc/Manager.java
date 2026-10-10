@@ -41,6 +41,7 @@ import cube.dispatcher.util.Tickable;
 import cube.util.FileLabels;
 import cube.util.FileUtils;
 import cube.util.HttpServer;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -54,7 +55,24 @@ public class Manager implements Tickable, PerformerListener {
 
     private final static Manager instance = new Manager();
 
-    private Performer performer;
+    private volatile Performer performer;
+
+    private volatile boolean running;
+
+    private long generation;
+
+    private static final long TOKEN_CACHE_TTL = 24L * 60 * 60 * 1000;
+
+    private static final long FUTURE_CACHE_TTL = 60L * 60 * 1000;
+
+    private final Set<HttpServer> initializedHttpServers =
+            Collections.newSetFromMap(new WeakHashMap<HttpServer, Boolean>());
+
+    /** 按协议封包序号关联任务，避免 reset 后的旧应答完成新任务。 */
+    private final Map<Long, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
+
+    // 仅在生命周期锁内访问；完成、替换及过期时同步移除两个索引。
+    private final Map<JSONable, PendingRequest> pendingFutures = new IdentityHashMap<>();
 
     /**
      * 已装载的业务模块网关扩展，按装载顺序。
@@ -66,120 +84,311 @@ public class Manager implements Tickable, PerformerListener {
     /**
      * Key：Token code
      */
-    private Map<String, ContactToken> validTokenMap;
+    private final Map<String, ContactToken> validTokenMap = new ConcurrentHashMap<>();
 
     /**
      * Key：操作序号。
      */
-    private Map<Long, TextToFileFuture> textToFileFutureMap;
+    private final Map<Long, TextToFileFuture> textToFileFutureMap = new ConcurrentHashMap<>();
 
     /**
      * Key：查询码
      */
-    private Map<String, SpeechRecognitionFuture> speechRecognitionFutureMap;
+    private final Map<String, SpeechRecognitionFuture> speechRecognitionFutureMap = new ConcurrentHashMap<>();
 
     /**
      * Key：文件码
      */
-    private Map<String, SpeechEmotionRecognitionFuture> speechEmotionRecognitionFutureMap;
+    private final Map<String, SpeechEmotionRecognitionFuture> speechEmotionRecognitionFutureMap = new ConcurrentHashMap<>();
 
     /**
      * Key：查询码
      */
-    private Map<String, SpeechDiarizationFuture> speechDiarizationFutureMap;
+    private final Map<String, SpeechDiarizationFuture> speechDiarizationFutureMap = new ConcurrentHashMap<>();
 
     /**
      * Key：文件码
      */
-    private Map<String, FacialExpressionRecognitionFuture> facialExpressionRecognitionFutureMap;
+    private final Map<String, FacialExpressionRecognitionFuture> facialExpressionRecognitionFutureMap = new ConcurrentHashMap<>();
 
     public static Manager getInstance() {
         return Manager.instance;
     }
 
-    public void start(Performer performer) {
-        this.performer = performer;
-        this.validTokenMap = new ConcurrentHashMap<>();
-        this.textToFileFutureMap = new ConcurrentHashMap<>();
-        this.speechRecognitionFutureMap = new ConcurrentHashMap<>();
-        this.speechEmotionRecognitionFutureMap = new ConcurrentHashMap<>();
-        this.speechDiarizationFutureMap = new ConcurrentHashMap<>();
-        this.facialExpressionRecognitionFutureMap = new ConcurrentHashMap<>();
-
-        this.setupHandler();
-
-        this.performer.addTickable(this);
-        this.performer.setListener(AIGCCellet.NAME, this);
-
-        this.lastTickTime = System.currentTimeMillis();
-
-        (new Thread() {
-            @Override
-            public void run() {
-                App.getInstance().start();
+    public synchronized void start(Performer performer) {
+        if (null == performer || null == performer.getHttpServer()) {
+            throw new IllegalArgumentException("A configured Performer is required");
+        }
+        if (this.running) {
+            if (this.performer != performer) {
+                throw new IllegalStateException("Manager is already bound to another Performer");
             }
-        }).start();
+            return;
+        }
+        this.performer = performer;
+        ++this.generation;
+        try {
+            HttpServer httpServer = performer.getHttpServer();
+            if (!this.initializedHttpServers.contains(httpServer)) {
+                this.setupHandler();
+                this.initializedHttpServers.add(httpServer);
+            }
+            App.getInstance().start();
+            performer.addTickable(this);
+            performer.setListener(AIGCCellet.NAME, this);
+            this.lastTickTime = System.currentTimeMillis();
+            this.running = true;
+        } catch (RuntimeException | Error e) {
+            performer.removeListener(AIGCCellet.NAME, this);
+            performer.removeTickable(this);
+            App.getInstance().stop();
+            throw e;
+        }
     }
 
-    public void stop() {
-        this.performer.removeTickable(this);
+    public synchronized void stop() {
+        if (!this.running) {
+            return;
+        }
+        this.running = false;
+        ++this.generation;
+        try {
+            this.performer.removeListener(AIGCCellet.NAME, this);
+            this.performer.removeTickable(this);
+            App.getInstance().stop();
+        } finally {
+            for (PendingRequest pending : this.pendingRequests.values()) {
+                pending.fail(AIGCStateCode.Cancelled);
+            }
+            this.pendingRequests.clear();
+            this.pendingFutures.clear();
+            this.validTokenMap.clear();
+            this.textToFileFutureMap.clear();
+            this.speechRecognitionFutureMap.clear();
+            this.speechEmotionRecognitionFutureMap.clear();
+            this.speechDiarizationFutureMap.clear();
+            this.facialExpressionRecognitionFutureMap.clear();
+        }
+    }
 
-        App.getInstance().stop();
+    private synchronized Performer activePerformer() {
+        return this.running ? this.performer : null;
     }
 
     public Performer getPerformer() {
         return this.performer;
     }
 
+    /** 不持有生命周期锁等待网络；已经开始的同步请求可以正常结束。 */
+    private ActionDialect syncTransmit(String cellet, ActionDialect request) {
+        Performer current;
+        synchronized (this) {
+            if (!this.running) {
+                return null;
+            }
+            current = this.performer;
+        }
+        return current.syncTransmit(cellet, request);
+    }
+
+    private ActionDialect syncTransmit(String cellet, ActionDialect request, long timeout) {
+        Performer current;
+        synchronized (this) {
+            if (!this.running) {
+                return null;
+            }
+            current = this.performer;
+        }
+        return current.syncTransmit(cellet, request, timeout);
+    }
+
+    private <K, F extends JSONable> F submitFuture(Packet packet, String token,
+                                                  Map<K, F> cache, K key, F future, boolean reset) {
+        final PendingRequest pending;
+        final Performer current;
+        synchronized (this) {
+            if (!this.running || isBlank(token)) {
+                return null;
+            }
+            F previous = cache.get(key);
+            if (null != previous) {
+                boolean expired = System.currentTimeMillis() - futureTimestamp(previous) >= FUTURE_CACHE_TTL;
+                if (!reset && !expired) {
+                    return previous;
+                }
+                this.detachFuture(previous, expired ? AIGCStateCode.Expired : AIGCStateCode.Cancelled);
+            }
+            current = this.performer;
+            pending = new PendingRequest(packet.sn, packet.name, key, cache, future);
+            cache.put(key, future);
+            this.pendingRequests.put(packet.sn, pending);
+            this.pendingFutures.put(future, pending);
+        }
+        ActionDialect request = packet.toDialect();
+        request.addParam("token", token);
+        boolean sent;
+        try {
+            sent = current.tryTransmit(AIGCCellet.NAME, request);
+        } catch (RuntimeException e) {
+            Logger.w(Manager.class, "#submitFuture - " + packet.name, e);
+            sent = false;
+        }
+        synchronized (this) {
+            if (!sent && this.pendingRequests.get(packet.sn) == pending) {
+                pending.fail(AIGCStateCode.Failure);
+                this.removePending(pending);
+            }
+        }
+        return future;
+    }
+
+    private void removePending(PendingRequest pending) {
+        this.pendingRequests.remove(pending.sn, pending);
+        this.pendingFutures.remove(pending.future);
+    }
+
+    private void detachFuture(JSONable future, AIGCStateCode state) {
+        PendingRequest pending = this.pendingFutures.get(future);
+        if (null != pending) {
+            pending.fail(state);
+            this.removePending(pending);
+        }
+    }
+
+    private static long futureTimestamp(JSONable future) {
+        if (future instanceof TextToFileFuture) {
+            return ((TextToFileFuture) future).timestamp;
+        }
+        if (future instanceof SpeechRecognitionFuture) {
+            return ((SpeechRecognitionFuture) future).timestamp;
+        }
+        if (future instanceof SpeechEmotionRecognitionFuture) {
+            return ((SpeechEmotionRecognitionFuture) future).timestamp;
+        }
+        if (future instanceof SpeechDiarizationFuture) {
+            return ((SpeechDiarizationFuture) future).timestamp;
+        }
+        return ((FacialExpressionRecognitionFuture) future).timestamp;
+    }
+
+    private static void failFuture(JSONable future, AIGCStateCode state) {
+        synchronized (future) {
+            if (future instanceof TextToFileFuture) {
+                TextToFileFuture f = (TextToFileFuture) future;
+                if (f.stateCode == AIGCStateCode.Processing.code) {
+                    f.stateCode = state.code;
+                }
+            }
+            else if (future instanceof SpeechRecognitionFuture) {
+                SpeechRecognitionFuture f = (SpeechRecognitionFuture) future;
+                if (f.stateCode == AIGCStateCode.Processing) {
+                    f.stateCode = state;
+                }
+            }
+            else if (future instanceof SpeechEmotionRecognitionFuture) {
+                SpeechEmotionRecognitionFuture f = (SpeechEmotionRecognitionFuture) future;
+                if (f.stateCode == AIGCStateCode.Processing) {
+                    f.stateCode = state;
+                }
+            }
+            else if (future instanceof SpeechDiarizationFuture) {
+                SpeechDiarizationFuture f = (SpeechDiarizationFuture) future;
+                if (f.stateCode == AIGCStateCode.Processing) {
+                    f.stateCode = state;
+                }
+            }
+            else if (future instanceof FacialExpressionRecognitionFuture) {
+                FacialExpressionRecognitionFuture f = (FacialExpressionRecognitionFuture) future;
+                if (f.stateCode == AIGCStateCode.Processing) {
+                    f.stateCode = state;
+                }
+            }
+        }
+    }
+
+    private static final class PendingRequest {
+
+        final long sn;
+        final String action;
+        final Object key;
+        final Map<?, ?> cache;
+        final JSONable future;
+
+        PendingRequest(long sn, String action, Object key, Map<?, ?> cache, JSONable future) {
+            this.sn = sn;
+            this.action = action;
+            this.key = key;
+            this.cache = cache;
+            this.future = future;
+        }
+
+        boolean isCurrent() {
+            return this.cache.get(this.key) == this.future;
+        }
+
+        void fail(AIGCStateCode state) {
+            failFuture(this.future, state);
+        }
+    }
+
+    private void registerHandler(HttpServer server, ContextHandler handler) {
+        for (ContextHandler existing : server.getContextHandlers()) {
+            if (Objects.equals(existing.getContextPath(), handler.getContextPath())) {
+                return;
+            }
+        }
+        server.addContextHandler(handler);
+    }
+
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
 
-        httpServer.addContextHandler(new Static());
-        httpServer.addContextHandler(new InterfaceDocument());
+        this.registerHandler(httpServer, new Static());
+        this.registerHandler(httpServer, new InterfaceDocument());
 
-        httpServer.addContextHandler(new Segmentation());
-        httpServer.addContextHandler(new Channel());
-        httpServer.addContextHandler(new StopProcessing());
-        httpServer.addContextHandler(new Chat());
-        httpServer.addContextHandler(new MultimodalBase());
-        httpServer.addContextHandler(new MultimodalStream());
-        httpServer.addContextHandler(new Summarization());
-        httpServer.addContextHandler(new SemanticSearch());
-        httpServer.addContextHandler(new SpeechEmotionRecognition());
-        httpServer.addContextHandler(new AutomaticSpeechRecognition());
-        httpServer.addContextHandler(new FacialExpressionRecognition());
-        httpServer.addContextHandler(new SpeechDiarization());
-        httpServer.addContextHandler(new SpeechDiarizationOperation());
-        httpServer.addContextHandler(new KnowledgeQA());
-        httpServer.addContextHandler(new KnowledgeProfiles());
-        httpServer.addContextHandler(new KnowledgeInfos());
-        httpServer.addContextHandler(new NewKnowledgeBase());
-        httpServer.addContextHandler(new DeleteKnowledgeBase());
-        httpServer.addContextHandler(new UpdateKnowledgeBase());
-        httpServer.addContextHandler(new KnowledgeDocs());
-        httpServer.addContextHandler(new ImportKnowledgeDoc());
-        httpServer.addContextHandler(new RemoveKnowledgeDoc());
-        httpServer.addContextHandler(new ResetKnowledgeStore());
-        httpServer.addContextHandler(new KnowledgeSegments());
-        httpServer.addContextHandler(new KnowledgeBackup());
-        httpServer.addContextHandler(new KnowledgeArticles());
-        httpServer.addContextHandler(new AppendKnowledgeArticle());
-        httpServer.addContextHandler(new RemoveKnowledgeArticle());
-        httpServer.addContextHandler(new ActivateKnowledgeArticle());
-        httpServer.addContextHandler(new DeactivateKnowledgeArticle());
-        httpServer.addContextHandler(new QueryAllArticleCategories());
-        httpServer.addContextHandler(new GenerateKnowledge());
-        httpServer.addContextHandler(new SearchResults());
-        httpServer.addContextHandler(new ContextInference());
-        httpServer.addContextHandler(new ChartData());
-        httpServer.addContextHandler(new Prompts());
-        httpServer.addContextHandler(new SubmitEvent());
-        httpServer.addContextHandler(new QueryAppEvents());
-        httpServer.addContextHandler(new QueryUsages());
-        httpServer.addContextHandler(new ChatHistory());
-        httpServer.addContextHandler(new TextToFile());
-        httpServer.addContextHandler(new GetQueueCount());
-        httpServer.addContextHandler(new ApplyStream());
+        this.registerHandler(httpServer, new Segmentation());
+        this.registerHandler(httpServer, new Channel());
+        this.registerHandler(httpServer, new StopProcessing());
+        this.registerHandler(httpServer, new Chat());
+        this.registerHandler(httpServer, new MultimodalBase());
+        this.registerHandler(httpServer, new MultimodalStream());
+        this.registerHandler(httpServer, new Summarization());
+        this.registerHandler(httpServer, new SemanticSearch());
+        this.registerHandler(httpServer, new SpeechEmotionRecognition());
+        this.registerHandler(httpServer, new AutomaticSpeechRecognition());
+        this.registerHandler(httpServer, new FacialExpressionRecognition());
+        this.registerHandler(httpServer, new SpeechDiarization());
+        this.registerHandler(httpServer, new SpeechDiarizationOperation());
+        this.registerHandler(httpServer, new KnowledgeQA());
+        this.registerHandler(httpServer, new KnowledgeProfiles());
+        this.registerHandler(httpServer, new KnowledgeInfos());
+        this.registerHandler(httpServer, new NewKnowledgeBase());
+        this.registerHandler(httpServer, new DeleteKnowledgeBase());
+        this.registerHandler(httpServer, new UpdateKnowledgeBase());
+        this.registerHandler(httpServer, new KnowledgeDocs());
+        this.registerHandler(httpServer, new ImportKnowledgeDoc());
+        this.registerHandler(httpServer, new RemoveKnowledgeDoc());
+        this.registerHandler(httpServer, new ResetKnowledgeStore());
+        this.registerHandler(httpServer, new KnowledgeSegments());
+        this.registerHandler(httpServer, new KnowledgeBackup());
+        this.registerHandler(httpServer, new KnowledgeArticles());
+        this.registerHandler(httpServer, new AppendKnowledgeArticle());
+        this.registerHandler(httpServer, new RemoveKnowledgeArticle());
+        this.registerHandler(httpServer, new ActivateKnowledgeArticle());
+        this.registerHandler(httpServer, new DeactivateKnowledgeArticle());
+        this.registerHandler(httpServer, new QueryAllArticleCategories());
+        this.registerHandler(httpServer, new GenerateKnowledge());
+        this.registerHandler(httpServer, new SearchResults());
+        this.registerHandler(httpServer, new ContextInference());
+        this.registerHandler(httpServer, new ChartData());
+        this.registerHandler(httpServer, new Prompts());
+        this.registerHandler(httpServer, new SubmitEvent());
+        this.registerHandler(httpServer, new QueryAppEvents());
+        this.registerHandler(httpServer, new QueryUsages());
+        this.registerHandler(httpServer, new ChatHistory());
+        this.registerHandler(httpServer, new TextToFile());
+        this.registerHandler(httpServer, new GetQueueCount());
+        this.registerHandler(httpServer, new ApplyStream());
 
         // ⚠️ 语音基础能力的端点（语音识别 /aigc/speech/recognition、
         // 说话人分离 /aigc/speech/diarization 及其 opt、情绪识别
@@ -200,7 +409,7 @@ public class Manager implements Tickable, PerformerListener {
         // 默认关闭：关闭时该路径不注册，专属端点不受影响。
         // 专属端点（上面 16 条）始终保留，兜底通道不替代它们。
         if (ModuleAction.isEnabled()) {
-            httpServer.addContextHandler(new ModuleAction());
+            this.registerHandler(httpServer, new ModuleAction());
             Logger.i(Manager.class, "#setupHandler - Module fallback channel enabled at " + ModuleAction.PATH);
         }
         else {
@@ -216,24 +425,24 @@ public class Manager implements Tickable, PerformerListener {
             Logger.i(Manager.class, "#setupHandler - Module REST prefixes: " + modulePrefixes);
         }
 
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Activate());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.User());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserModify());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Profile());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Membership());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.AppVersion());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.ASCIIArt());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.WordCloud());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Emotion());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.UserSignOut());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Session());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Verify());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Config());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Change());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Chat());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Evaluate());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.KeepAlive());
-        httpServer.addContextHandler(new cube.dispatcher.aigc.handler.app.Inject());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Activate());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.User());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.UserModify());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Profile());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Membership());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.AppVersion());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.ASCIIArt());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.WordCloud());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Emotion());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.UserSignOut());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Session());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Verify());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Config());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Change());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Chat());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Evaluate());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.KeepAlive());
+        this.registerHandler(httpServer, new cube.dispatcher.aigc.handler.app.Inject());
 
         // 业务模块自有的 REST 端点：排在全部宿主端点之后，
         // 使宿主端点在路径重复时天然优先（重复项会被记 ERROR 并跳过）。
@@ -244,7 +453,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(action.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#syncRequest - Response is null, action: " + action.name);
             return null;
@@ -265,73 +474,96 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public String checkAndGetToken(String token, Device device) {
-        if (null == token || null == device) {
-            if (null == token) {
-                Logger.w(this.getClass(), "#checkAndGetToken - The token is null");
-            }
-            else {
-                Logger.w(this.getClass(), "#checkAndGetToken - The device is null");
-            }
+        ContactToken contactToken = this.resolveContactToken(token, device);
+        return null == contactToken ? null : contactToken.authToken.getCode();
+    }
+
+    private ContactToken resolveContactToken(String token, Device device) {
+        if (isBlank(token) || null == device || isBlank(device.getName())) {
             return null;
         }
-
-        if (this.validTokenMap.containsKey(token)) {
+        final long requestGeneration;
+        final Performer current;
+        synchronized (this) {
+            if (!this.running) {
+                return null;
+            }
+            requestGeneration = this.generation;
+            current = this.performer;
             ContactToken contactToken = this.validTokenMap.get(token);
-            if (device.isUnknown() ||
-                    device.getName().equalsIgnoreCase(contactToken.device.getName())) {
-                // 相同设备
-                return contactToken.authToken.getCode();
+            if (null != contactToken) {
+                if (isTokenExpired(contactToken, System.currentTimeMillis())) {
+                    this.validTokenMap.remove(token, contactToken);
+                }
+                else if (device.isUnknown() ||
+                        device.getName().equalsIgnoreCase(contactToken.device.getName())) {
+                    return contactToken;
+                }
             }
         }
-
-        JSONObject data = new JSONObject();
-
-        // 如果是6位，则视为邀请码
-        if (token.length() == 6) {
-            data.put("invitation", token);
-        }
-        else {
-            data.put("token", token);
-        }
-        data.put("device", device.toJSON());
-        Packet packet = new Packet(AIGCAction.CheckToken.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
-        if (null == response) {
-            Logger.w(Manager.class, "#checkAndGetToken - Response is null : " + token);
+        try {
+            JSONObject data = new JSONObject();
+            data.put(token.length() == 6 ? "invitation" : "token", token);
+            data.put("device", device.toJSON());
+            Packet packet = new Packet(AIGCAction.CheckToken.name, data);
+            ActionDialect response = current.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+            if (null == response) {
+                return null;
+            }
+            Packet responsePacket = new Packet(response);
+            if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                return null;
+            }
+            JSONObject payload = Packet.extractDataPayload(responsePacket);
+            JSONObject tokenJson = payload.getJSONObject("token");
+            // AuthToken 构造函数吞掉 JSON 异常，在构造前校验必需字段。
+            if (isBlank(tokenJson.getString("code"))) {
+                return null;
+            }
+            tokenJson.getString("domain");
+            tokenJson.getString("appKey");
+            tokenJson.getLong("cid");
+            tokenJson.getLong("issue");
+            tokenJson.getLong("expiry");
+            AuthToken authToken = new AuthToken(tokenJson);
+            JSONObject contactJson = payload.getJSONObject("contact");
+            contactJson.getLong("id");
+            ContactToken contactToken = new ContactToken(authToken, new Contact(contactJson), device);
+            synchronized (this) {
+                if (!this.running || this.generation != requestGeneration ||
+                        isTokenExpired(contactToken, System.currentTimeMillis())) {
+                    return null;
+                }
+                this.validTokenMap.put(authToken.getCode(), contactToken);
+                return contactToken;
+            }
+        } catch (RuntimeException e) {
+            Logger.w(Manager.class, "#resolveContactToken - Invalid authentication response", e);
             return null;
         }
-
-        Packet responsePacket = new Packet(response);
-        if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-            Logger.d(Manager.class, "#checkAndGetToken - Response state is NOT ok : " +
-                    Packet.extractCode(responsePacket) + " - " + token);
-            return null;
-        }
-
-        JSONObject payload = Packet.extractDataPayload(responsePacket);
-        AuthToken authToken = new AuthToken(payload.getJSONObject("token"));
-        String resultToken = authToken.getCode();
-        Contact contact = new Contact(payload.getJSONObject("contact"));
-        this.validTokenMap.put(resultToken, new ContactToken(authToken, contact, device));
-
-        return resultToken;
     }
 
     public ContactToken getContactToken(String token, Device device) {
-        ContactToken contactToken = this.validTokenMap.get(token);
-        if (null == contactToken) {
-            this.checkAndGetToken(token, device);
-        }
-        return this.validTokenMap.get(token);
+        return this.resolveContactToken(token, device);
     }
 
     public void removeTokenCache(String token) {
-        this.validTokenMap.remove(token);
+        if (null != token) {
+            this.validTokenMap.remove(token);
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return null == value || value.trim().isEmpty();
+    }
+
+    private static boolean isTokenExpired(ContactToken token, long now) {
+        return now - token.timestamp >= TOKEN_CACHE_TTL || token.authToken.getExpiry() <= now;
     }
 
     public JSONObject getOrCreateUser(JSONObject data) {
         Packet packet = new Packet(AIGCAction.AppGetOrCreateUser.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
             Logger.w(Manager.class, "#getOrCreateUser - Response is null");
             return null;
@@ -351,7 +583,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppModifyUser.name, modification);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#modifyUser - Response is null");
             return null;
@@ -372,7 +604,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppCheckInUser.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#checkInUser - Response is null");
             return null;
@@ -406,7 +638,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppSignOutUser.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#signOutUser - Response is null");
             return null;
@@ -419,6 +651,7 @@ public class Manager implements Tickable, PerformerListener {
             return null;
         }
 
+        this.removeTokenCache(token);
         return Packet.extractDataPayload(responsePacket);
     }
 
@@ -426,7 +659,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppGetUserProfile.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getUserProfile - Response is null");
             return null;
@@ -449,7 +682,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppActivateMembership.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#activateMembership - Response is null");
             return null;
@@ -469,7 +702,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppVersion.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getAppVersion - Response is null");
             return null;
@@ -489,7 +722,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppASCIIArt.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getASCIIArt - Response is null");
             return null;
@@ -509,7 +742,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetWordCloud.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getWordCloud - Response is null");
             return null;
@@ -533,7 +766,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         Packet packet = new Packet(AIGCAction.AppInjectOrGetToken.name, data);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
             Logger.w(Manager.class, "#checkOrInjectContactToken - Response is null : " + phoneNumber);
             return null;
@@ -557,7 +790,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetConfig.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getConfigData - Response is null : " + token);
             return null;
@@ -596,7 +829,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetKnowledgeProfile.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeProfile - Response is null : " + token);
             return null;
@@ -628,7 +861,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.UpdateKnowledgeProfile.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#updateKnowledgeProfile - Response is null : " + token);
             return null;
@@ -647,7 +880,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetKnowledgeFramework.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeFramework - Response is null : " + token);
             return null;
@@ -679,7 +912,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.NewKnowledgeBase.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#newKnowledgeBase - Response is null : " + token);
             return null;
@@ -706,7 +939,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.DeleteKnowledgeBase.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#deleteKnowledgeBase - Response is null : " + token);
             return null;
@@ -727,7 +960,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.UpdateKnowledgeBase.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#updateKnowledgeBase - Response is null : " + token);
             return null;
@@ -750,7 +983,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ListKnowledgeDocs.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
             return null;
@@ -778,7 +1011,7 @@ public class Manager implements Tickable, PerformerListener {
                     packet = new Packet(AIGCAction.ListKnowledgeDocs.name, packetPayload);
                     request = packet.toDialect();
                     request.addParam("token", token);
-                    response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+                    response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
                     if (null == response) {
                         Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
                         break;
@@ -826,7 +1059,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#importKnowledgeDoc - Response is null : " + token);
             return null;
@@ -851,7 +1084,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ImportKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#importKnowledgeDocs - Response is null : " + token);
             return null;
@@ -873,7 +1106,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.RemoveKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#removeKnowledgeDoc - Response is null : " + token);
             return null;
@@ -898,7 +1131,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.RemoveKnowledgeDoc.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#removeKnowledgeDocs - Response is null : " + token);
             return null;
@@ -923,7 +1156,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeDocSegments - Response is null : " + token);
             return null;
@@ -949,7 +1182,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetKnowledgeProgress.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeProgress - Response is null : " + token);
             return null;
@@ -976,7 +1209,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetResetKnowledgeProgress.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getResetKnowledgeProgress - Response is null : " + token);
             return null;
@@ -1005,7 +1238,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ResetKnowledgeStore.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#resetKnowledgeStore - Response is null : " + token);
             return null;
@@ -1028,7 +1261,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getBackupKnowledgeStores - Response is null : " + token);
             return null;
@@ -1050,7 +1283,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, param);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeArticle - Response is null : " + token);
             return null;
@@ -1074,7 +1307,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ListKnowledgeArticles.name, param);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeArticles - Response is null : " + token);
             return null;
@@ -1103,7 +1336,7 @@ public class Manager implements Tickable, PerformerListener {
                     packet = new Packet(AIGCAction.ListKnowledgeArticles.name, packetPayload);
                     request = packet.toDialect();
                     request.addParam("token", token);
-                    response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+                    response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
                     if (null == response) {
                         Logger.w(Manager.class, "#getKnowledgeDocs - Response is null : " + token);
                         return null;
@@ -1141,7 +1374,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.UpdateKnowledgeArticle.name, article.toJSON());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#updateKnowledgeArticle - Response is null : " + token);
             return null;
@@ -1160,7 +1393,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AppendKnowledgeArticle.name, article.toJSON());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#appendKnowledgeArticle - Response is null : " + token);
             return null;
@@ -1181,7 +1414,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.RemoveKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#removeKnowledgeArticle - Response is null : " + token);
             return null;
@@ -1205,7 +1438,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.ActivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#activateKnowledgeArticle - Response is null : " + token);
             return null;
@@ -1235,7 +1468,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.DeactivateKnowledgeArticle.name, payload);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#deactivateKnowledgeArticle - Response is null : " + token);
             return null;
@@ -1260,7 +1493,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.QueryAllArticleCategories.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#queryAllArticleCategories - Response is null : " + token);
             return null;
@@ -1285,7 +1518,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#generateKnowledge - Response is null : " + token);
             return null;
@@ -1312,7 +1545,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.Evaluate.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#evaluate - Response is null");
             return false;
@@ -1331,7 +1564,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.AddAppEvent.name, appEvent.toJSON());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#addAppEvent - Response is null");
             return false;
@@ -1354,7 +1587,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.QueryAppEvent.name, requestData);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#queryAppEvents - Response is null");
             return null;
@@ -1377,7 +1610,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.QueryUsages.name, requestData);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#queryUsages - Response is null");
             return null;
@@ -1406,7 +1639,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.QueryChatHistory.name, requestData);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 30 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#queryChatHistory - Response is null");
             return null;
@@ -1428,7 +1661,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("participant", participant);
         Packet packet = new Packet(AIGCAction.RequestChannel.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
             Logger.w(Manager.class, "#requestChannel - Response is null : " + participant);
             return null;
@@ -1452,7 +1685,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.StopChannel.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#stopProcessing - Response is null : " + channelCode);
             return null;
@@ -1475,7 +1708,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetChannelInfo.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getChannel - Response is null : " + channelCode);
             return null;
@@ -1496,7 +1729,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("code", channelCode);
         Packet packet = new Packet(AIGCAction.KeepAliveChannel.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect());
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, packet.toDialect());
         if (null == response) {
             Logger.w(Manager.class, "#keepAliveChannel - Response is null, code : " + channelCode);
             return false;
@@ -1516,7 +1749,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetQueueCount.name, new JSONObject());
         ActionDialect dialect = packet.toDialect();
         dialect.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, dialect);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, dialect);
         if (null == response) {
             Logger.w(Manager.class, "#queryQueueCount - Response is null : " + token);
             return null;
@@ -1571,7 +1804,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.Chat.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 5 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 5 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#chat - Response is null - " + channelCode);
             return null;
@@ -1635,7 +1868,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.Multimodal.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#executeMultimodal - Response is null - " + channelCode);
             return null;
@@ -1661,7 +1894,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.QueryMultimodal.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#queryMultimodal - Response is null - " + channelCode);
             return null;
@@ -1682,7 +1915,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#querySearchResults - Response is null");
             return null;
@@ -1705,7 +1938,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getContextInference - Response is null");
             return null;
@@ -1735,7 +1968,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 4 * 60 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#performKnowledgeQA - Response is null: " + token);
             return null;
@@ -1762,7 +1995,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(Manager.class, "#getKnowledgeQAProgress - Response is null: " + token);
             return null;
@@ -1784,7 +2017,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.SemanticSearch.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#semanticSearch - Response is null");
             return null;
@@ -1805,7 +2038,7 @@ public class Manager implements Tickable, PerformerListener {
         data.put("text", text);
         Packet packet = new Packet(AIGCAction.Summarization.name, data);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 90 * 1000);
         if (null == response) {
             Logger.w(Manager.class, "#generateSummarization - Response is null");
             return null;
@@ -1830,7 +2063,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         Packet packet = new Packet(AIGCAction.NaturalLanguageTask.name, task.toJSON());
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 100);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, packet.toDialect(), 120 * 100);
         if (null == response) {
             Logger.w(Manager.class, "#performNaturalLanguageTask - Response is null");
             return null;
@@ -1847,23 +2080,17 @@ public class Manager implements Tickable, PerformerListener {
     }*/
 
     public TextToFileFuture textToFile(String token, String text, JSONArray fileCodeList) {
+        if (isBlank(token) || null == text || null == fileCodeList) {
+            return null;
+        }
         long sn = Utils.generateSerialNumber();
-
         JSONObject data = new JSONObject();
         data.put("sn", sn);
         data.put("text", text);
         data.put("files", fileCodeList);
-
-        Packet packet = new Packet(AIGCAction.TextToFile.name, data);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-
-        TextToFileFuture future = new TextToFileFuture(sn, token, text, fileCodeList);
-        this.textToFileFutureMap.put(sn, future);
-        
-        this.performer.transmit(AIGCCellet.NAME, request);
-
-        return future;
+        Packet packet = new Packet(sn, AIGCAction.TextToFile.name, data);
+        return this.submitFuture(packet, token, this.textToFileFutureMap, sn,
+                new TextToFileFuture(sn, token, text, fileCodeList), false);
     }
 
     public TextToFileFuture getTextToFileFuture(long sn) {
@@ -1872,153 +2099,91 @@ public class Manager implements Tickable, PerformerListener {
 
     public SpeechRecognitionFuture automaticSpeechRecognition(String token, String fileCode, String fileUrl,
                                                               boolean sync, boolean reset) {
+        if (isBlank(token) || isBlank(null != fileCode ? fileCode : fileUrl)) {
+            return null;
+        }
         JSONObject data = new JSONObject();
-        if (null != fileCode) {
-            data.put("fileCode", fileCode);
-        }
-        else {
-            data.put("fileUrl", fileUrl);
-        }
+        data.put(null != fileCode ? "fileCode" : "fileUrl", null != fileCode ? fileCode : fileUrl);
         Packet packet = new Packet(AIGCAction.AutomaticSpeechRecognition.name, data);
-        ActionDialect dialect = packet.toDialect();
-        dialect.addParam("token", token);
-
         if (sync) {
-            ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, dialect, 60 * 1000);
+            ActionDialect request = packet.toDialect();
+            request.addParam("token", token);
+            ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
             if (null == response) {
-                Logger.w(Manager.class, "#automaticSpeechRecognition - Response is null");
                 return null;
             }
-
-            Packet responsePacket = new Packet(response);
-            if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
-                Logger.w(Manager.class, "#automaticSpeechRecognition - Response state code : "
-                        + Packet.extractCode(responsePacket));
-                return null;
-            }
-
             try {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
+                Packet responsePacket = new Packet(response);
+                if (Packet.extractCode(responsePacket) != AIGCStateCode.Ok.code) {
+                    return null;
+                }
+                SpeechRecognitionInfo result = new SpeechRecognitionInfo(Packet.extractDataPayload(responsePacket));
+                if (null == result.file) {
+                    return null;
+                }
                 return new SpeechRecognitionFuture(token, fileCode, fileUrl, result);
-            } catch (Exception e) {
-                Logger.e(this.getClass(), "#automaticSpeechRecognition", e);
+            } catch (RuntimeException e) {
+                Logger.w(Manager.class, "#automaticSpeechRecognition - Invalid response", e);
                 return null;
             }
         }
-        else {
-            String queryCode = FileUtils.fastHash((null != fileCode) ? fileCode : fileUrl);
-            if (reset) {
-                this.speechRecognitionFutureMap.remove(queryCode);
-            }
-            else {
-                if (this.speechRecognitionFutureMap.containsKey(queryCode)) {
-                    // 正在处理
-                    return this.speechRecognitionFutureMap.get(queryCode);
-                }
-            }
-
-            SpeechRecognitionFuture future = new SpeechRecognitionFuture(token, fileCode, fileUrl, queryCode);
-            this.speechRecognitionFutureMap.put(queryCode, future);
-
-            this.performer.transmit(AIGCCellet.NAME, dialect);
-            return future;
-        }
+        String queryCode = FileUtils.fastHash(null != fileCode ? fileCode : fileUrl);
+        return this.submitFuture(packet, token, this.speechRecognitionFutureMap, queryCode,
+                new SpeechRecognitionFuture(token, fileCode, fileUrl, queryCode), reset);
     }
 
     public SpeechRecognitionFuture getSpeechRecognitionFuture(String queryCode) {
-        return this.speechRecognitionFutureMap.get(queryCode);
+        return null == queryCode ? null : this.speechRecognitionFutureMap.get(queryCode);
     }
 
     public SpeechEmotionRecognitionFuture speechEmotionRecognition(String token, String fileCode, boolean reset) {
-        if (reset) {
-            this.speechEmotionRecognitionFutureMap.remove(fileCode);
+        if (isBlank(token) || isBlank(fileCode)) {
+            return null;
         }
-        else {
-            if (this.speechEmotionRecognitionFutureMap.containsKey(fileCode)) {
-                // 正在处理
-                return this.speechEmotionRecognitionFutureMap.get(fileCode);
-            }
-        }
-
         JSONObject payload = new JSONObject();
         payload.put("fileCode", fileCode);
-        Packet packet = new Packet(AIGCAction.SpeechEmotionRecognition.name, payload);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-
-        SpeechEmotionRecognitionFuture future = new SpeechEmotionRecognitionFuture(token, fileCode);
-        this.speechEmotionRecognitionFutureMap.put(fileCode, future);
-
-        this.performer.transmit(AIGCCellet.NAME, request);
-        return future;
+        return this.submitFuture(new Packet(AIGCAction.SpeechEmotionRecognition.name, payload), token,
+                this.speechEmotionRecognitionFutureMap, fileCode,
+                new SpeechEmotionRecognitionFuture(token, fileCode), reset);
     }
 
     public SpeechEmotionRecognitionFuture getSpeechEmotionRecognitionFuture(String fileCode) {
-        return this.speechEmotionRecognitionFutureMap.get(fileCode);
+        return null == fileCode ? null : this.speechEmotionRecognitionFutureMap.get(fileCode);
     }
 
     public FacialExpressionRecognitionFuture facialExpressionRecognition(String token, String fileCode,
                                                                          boolean visualize, boolean reset) {
-        if (reset) {
-            this.facialExpressionRecognitionFutureMap.remove(fileCode);
+        if (isBlank(token) || isBlank(fileCode)) {
+            return null;
         }
-        else {
-            if (this.facialExpressionRecognitionFutureMap.containsKey(fileCode)) {
-                // 正在处理
-                return this.facialExpressionRecognitionFutureMap.get(fileCode);
-            }
-        }
-
         JSONObject payload = new JSONObject();
         payload.put("fileCode", fileCode);
         payload.put("visualize", visualize);
-        Packet packet = new Packet(AIGCAction.FacialExpressionRecognition.name, payload);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-
-        FacialExpressionRecognitionFuture future = new FacialExpressionRecognitionFuture(token, fileCode);
-        this.facialExpressionRecognitionFutureMap.put(fileCode, future);
-
-        this.performer.transmit(AIGCCellet.NAME, request);
-        return future;
+        return this.submitFuture(new Packet(AIGCAction.FacialExpressionRecognition.name, payload), token,
+                this.facialExpressionRecognitionFutureMap, fileCode,
+                new FacialExpressionRecognitionFuture(token, fileCode), reset);
     }
 
     public FacialExpressionRecognitionFuture getFacialExpressionRecognitionFuture(String fileCode) {
-        return this.facialExpressionRecognitionFutureMap.get(fileCode);
+        return null == fileCode ? null : this.facialExpressionRecognitionFutureMap.get(fileCode);
     }
 
     public SpeechDiarizationFuture speechDiarization(String token, String fileCode, String fileUrl, boolean reset) {
-        String queryCode = FileUtils.fastHash((null != fileCode) ? fileCode : fileUrl);
-        if (reset) {
-            this.speechDiarizationFutureMap.remove(queryCode);
+        if (isBlank(token) || isBlank(null != fileCode ? fileCode : fileUrl)) {
+            return null;
         }
-        else {
-            if (this.speechDiarizationFutureMap.containsKey(queryCode)) {
-                // 正在处理
-                return this.speechDiarizationFutureMap.get(queryCode);
-            }
-        }
-
+        String queryCode = FileUtils.fastHash(null != fileCode ? fileCode : fileUrl);
         JSONObject payload = new JSONObject();
-        if (null != fileCode) {
-            payload.put("fileCode", fileCode);
-        }
-        else {
-            payload.put("fileUrl", fileUrl);
-        }
-        Packet packet = new Packet(AIGCAction.SpeechDiarization.name, payload);
-        ActionDialect request = packet.toDialect();
-        request.addParam("token", token);
-
-        SpeechDiarizationFuture future = new SpeechDiarizationFuture(token, fileCode, fileUrl, queryCode);
-        this.speechDiarizationFutureMap.put(queryCode, future);
-
-        this.performer.transmit(AIGCCellet.NAME, request);
-        return future;
+        payload.put(null != fileCode ? "fileCode" : "fileUrl", null != fileCode ? fileCode : fileUrl);
+        return this.submitFuture(new Packet(AIGCAction.SpeechDiarization.name, payload), token,
+                this.speechDiarizationFutureMap, queryCode,
+                new SpeechDiarizationFuture(token, fileCode, fileUrl, queryCode), reset);
     }
 
     public SpeechDiarizationFuture getSpeechDiarization(String token, String queryCode) {
+        if (isBlank(token) || isBlank(queryCode)) {
+            return null;
+        }
         SpeechDiarizationFuture future = null;
         if (queryCode.length() == 64) {
             future = this.speechDiarizationFutureMap.get(FileUtils.fastHash(queryCode));
@@ -2036,7 +2201,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getSpeechDiarization - No response: " + token);
             return null;
@@ -2066,7 +2231,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#listSpeechDiarizations - No response: " + token);
             return null;
@@ -2098,7 +2263,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 2 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#deleteSpeechDiarization - No response: " + token);
             return null;
@@ -2129,7 +2294,7 @@ public class Manager implements Tickable, PerformerListener {
         Packet packet = new Packet(AIGCAction.GetEmotionRecords.name, new JSONObject());
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getUserEmotionData - No response: " + token);
             return null;
@@ -2176,7 +2341,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#segmentation - No response");
             return null;
@@ -2196,7 +2361,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#handleChartData - No response");
             return null;
@@ -2216,7 +2381,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#getPrompts - No response");
             return null;
@@ -2253,7 +2418,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#addPrompts - No response");
             return false;
@@ -2282,7 +2447,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#removePrompts - No response");
             return false;
@@ -2309,7 +2474,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#updatePrompt - No response");
             return false;
@@ -2329,7 +2494,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#submitEvent - No response");
             return null;
@@ -2359,7 +2524,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request);
         if (null == response) {
             Logger.w(this.getClass(), "#inferByModule - No response");
             return null;
@@ -2406,7 +2571,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#generatePsychologyReport - No response");
             return null;
@@ -2439,7 +2604,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#generatePsychologyReport - No response");
             return null;
@@ -2481,7 +2646,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyReports - No response: " + token);
             return null;
@@ -2503,7 +2668,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#checkPsychologyPainting - No response");
             return null;
@@ -2528,7 +2693,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyReport - No response");
             return null;
@@ -2558,7 +2723,7 @@ public class Manager implements Tickable, PerformerListener {
         request = packet.toDialect();
         request.addParam("token", token);
 
-        response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyReport - No response");
             return null;
@@ -2582,7 +2747,7 @@ public class Manager implements Tickable, PerformerListener {
             request = packet.toDialect();
             request.addParam("token", token);
 
-            response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+            response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
             if (null == response) {
                 Logger.w(this.getClass(), "#getPsychologyReport - No response");
                 return null;
@@ -2602,6 +2767,11 @@ public class Manager implements Tickable, PerformerListener {
 
     public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section, boolean thought,
                                               boolean summary, boolean rating,  boolean link) {
+        Performer current = this.activePerformer();
+        if (null == current) {
+            return null;
+        }
+
         JSONObject data = new JSONObject();
         data.put("sn", sn);
         data.put("content", content);
@@ -2610,12 +2780,12 @@ public class Manager implements Tickable, PerformerListener {
         data.put("summary", summary);
         data.put("rating", rating);
         data.put("link", link);
-        data.put("endpoint", this.performer.getExternalHttpsEndpoint().toJSON());
+        data.put("endpoint", current.getExternalHttpsEndpoint().toJSON());
         Packet packet = new Packet(AIGCAction.GetPsychologyReportPart.name, data);
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyReportPart - No response");
             return null;
@@ -2637,7 +2807,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#stopGeneratingPsychologyReport - No response");
             return null;
@@ -2662,7 +2832,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#resetReportAttention - No response");
             return null;
@@ -2682,7 +2852,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#modifyReportRemark - No response");
             return null;
@@ -2701,7 +2871,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#listPsychologyScales - No response");
             return null;
@@ -2723,7 +2893,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyScale - No response");
             return null;
@@ -2747,7 +2917,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#generatePsychologyScale - No response");
             return null;
@@ -2767,7 +2937,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#submitPsychologyAnswerSheet - No response");
             return null;
@@ -2784,9 +2954,14 @@ public class Manager implements Tickable, PerformerListener {
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
                                                     JSONArray relations, String query) {
+        Performer current = this.activePerformer();
+        if (null == current) {
+            return null;
+        }
+
         JSONObject endpoint = new JSONObject();
-        endpoint.put("http", this.performer.getExternalHttpEndpoint().toJSON());
-        endpoint.put("https", this.performer.getExternalHttpsEndpoint().toJSON());
+        endpoint.put("http", current.getExternalHttpEndpoint().toJSON());
+        endpoint.put("https", current.getExternalHttpsEndpoint().toJSON());
 
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
@@ -2797,7 +2972,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#executePsychologyConversation - No response");
             return null;
@@ -2814,14 +2989,19 @@ public class Manager implements Tickable, PerformerListener {
 
     public JSONObject executePsychologyConversation(String token, String channelCode,
                                                     JSONObject context, JSONObject relation, String query) {
+        Performer current = this.activePerformer();
+        if (null == current) {
+            return null;
+        }
+
         if (null == relation) {
             Logger.w(this.getClass(), "#executePsychologyConversation - The relation is null");
             return null;
         }
 
         JSONObject endpoint = new JSONObject();
-        endpoint.put("http", this.performer.getExternalHttpEndpoint().toJSON());
-        endpoint.put("https", this.performer.getExternalHttpsEndpoint().toJSON());
+        endpoint.put("http", current.getExternalHttpEndpoint().toJSON());
+        endpoint.put("https", current.getExternalHttpsEndpoint().toJSON());
 
         JSONObject data = new JSONObject();
         data.put("channelCode", channelCode);
@@ -2835,7 +3015,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#executePsychologyConversation - No response");
             return null;
@@ -2857,7 +3037,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 120 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 120 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyPainting - No response");
             return null;
@@ -2882,7 +3062,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyPainting - No response");
             return null;
@@ -2905,7 +3085,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPsychologyPaintingChart - No response");
             return null;
@@ -2927,7 +3107,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getPaintingLabels - No response");
             return null;
@@ -2951,7 +3131,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 90 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#submitPaintingLabels - No response");
             return false;
@@ -2974,7 +3154,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#setPaintingReportState - No response");
             return false;
@@ -2990,26 +3170,33 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public boolean applyStream(String token, Device device, String streamType, String streamName) {
+        Performer current;
+        long requestGeneration;
+        synchronized (this) {
+            if (!this.running || isBlank(streamType) || isBlank(streamName)) {
+                return false;
+            }
+            current = this.performer;
+            requestGeneration = this.generation;
+        }
         if (null == StreamType.parse(streamType)) {
-            Logger.w(this.getClass(), "#applyStream - Error on stream type: " + streamType);
             return false;
         }
-
         ContactToken contactToken = this.getContactToken(token, device);
         if (null == contactToken) {
-            Logger.w(this.getClass(), "#applyStream - Error on token: " + token);
             return false;
         }
-
-        Cellet cellet = this.performer.getCellet(AIGCCellet.NAME);
-        if (null == cellet) {
-            Logger.w(this.getClass(), "#applyStream - No the cellet");
-            return false;
+        synchronized (this) {
+            if (!this.running || this.generation != requestGeneration) {
+                return false;
+            }
+            Cellet cellet = current.getCellet(AIGCCellet.NAME);
+            if (!(cellet instanceof AIGCCellet) || null == ((AIGCCellet) cellet).getStreamProcessor()) {
+                return false;
+            }
+            ((AIGCCellet) cellet).getStreamProcessor().register(streamName, contactToken.authToken);
+            return true;
         }
-
-        AIGCCellet aigcCellet = (AIGCCellet) cellet;
-        aigcCellet.getStreamProcessor().register(streamName, contactToken.authToken);
-        return true;
     }
 
     public boolean stopStream(String token, String streamName) {
@@ -3019,7 +3206,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#stopStream - No response");
             return false;
@@ -3041,7 +3228,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#getStreamFile - No response");
             return null;
@@ -3078,7 +3265,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#queryCounselingStrategy - No response");
             return null;
@@ -3118,7 +3305,7 @@ public class Manager implements Tickable, PerformerListener {
         ActionDialect request = packet.toDialect();
         request.addParam("token", token);
 
-        ActionDialect response = this.performer.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
+        ActionDialect response = this.syncTransmit(AIGCCellet.NAME, request, 3 * 60 * 1000);
         if (null == response) {
             Logger.w(this.getClass(), "#queryCounselingCaption - No response");
             return null;
@@ -3134,220 +3321,133 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     @Override
-    public void onTick(long now) {
-        if (now - this.lastTickTime > 60 * 1000) {
-            this.lastTickTime = now;
-
-            Iterator<Map.Entry<String, ContactToken>> ctIter = this.validTokenMap.entrySet().iterator();
-            while (ctIter.hasNext()) {
-                ContactToken contactToken = ctIter.next().getValue();
-                if (now - contactToken.timestamp > 24 * 60 * 60 * 1000) {
-                    ctIter.remove();
-                }
-            }
-
-            Iterator<Map.Entry<Long, TextToFileFuture>> ttfIter = this.textToFileFutureMap.entrySet().iterator();
-            while (ttfIter.hasNext()) {
-                Map.Entry<Long, TextToFileFuture> e = ttfIter.next();
-                if (now - e.getValue().timestamp > 60 * 60 * 1000) {
-                    ttfIter.remove();
-                }
-            }
-
-            Iterator<Map.Entry<String, SpeechRecognitionFuture>> srfIter = this.speechRecognitionFutureMap.entrySet().iterator();
-            while (srfIter.hasNext()) {
-                Map.Entry<String, SpeechRecognitionFuture> e = srfIter.next();
-                SpeechRecognitionFuture future = e.getValue();
-                if (now - future.timestamp > 60 * 60 * 1000) {
-                    srfIter.remove();
-                }
-            }
-
-            Iterator<Map.Entry<String, SpeechEmotionRecognitionFuture>> serfIter = this.speechEmotionRecognitionFutureMap.entrySet().iterator();
-            while (serfIter.hasNext()) {
-                Map.Entry<String, SpeechEmotionRecognitionFuture> e = serfIter.next();
-                SpeechEmotionRecognitionFuture future = e.getValue();
-                if (now - future.timestamp > 60 * 60 * 1000) {
-                    serfIter.remove();
-                }
-            }
-
-            Iterator<Map.Entry<String, SpeechDiarizationFuture>> sdfIter = this.speechDiarizationFutureMap.entrySet().iterator();
-            while (sdfIter.hasNext()) {
-                Map.Entry<String, SpeechDiarizationFuture> e = sdfIter.next();
-                SpeechDiarizationFuture future = e.getValue();
-                if (now - future.timestamp > 60 * 60 * 1000) {
-                    sdfIter.remove();
-                }
-            }
+    public synchronized void onTick(long now) {
+        if (!this.running) {
+            return;
         }
-
-        // 回调 App 的 onTick
+        if (now - this.lastTickTime >= 60 * 1000) {
+            this.lastTickTime = now;
+            for (Map.Entry<String, ContactToken> entry : this.validTokenMap.entrySet()) {
+                if (isTokenExpired(entry.getValue(), now)) {
+                    this.validTokenMap.remove(entry.getKey(), entry.getValue());
+                }
+            }
+            this.clearExpiredFutures(this.textToFileFutureMap, now);
+            this.clearExpiredFutures(this.speechRecognitionFutureMap, now);
+            this.clearExpiredFutures(this.speechEmotionRecognitionFutureMap, now);
+            this.clearExpiredFutures(this.speechDiarizationFutureMap, now);
+            this.clearExpiredFutures(this.facialExpressionRecognitionFutureMap, now);
+        }
         App.getInstance().onTick(now);
     }
 
+    private <K, F extends JSONable> void clearExpiredFutures(Map<K, F> cache, long now) {
+        for (Map.Entry<K, F> entry : cache.entrySet()) {
+            F future = entry.getValue();
+            if (now - futureTimestamp(future) >= FUTURE_CACHE_TTL && cache.remove(entry.getKey(), future)) {
+                this.detachFuture(future, AIGCStateCode.Expired);
+            }
+        }
+    }
+
     @Override
-    public void onReceived(String cellet, Primitive primitive) {
-        ActionDialect actionDialect = new ActionDialect(primitive);
-        String action = actionDialect.getName();
+    public synchronized void onReceived(String cellet, Primitive primitive) {
+        if (!this.running || !AIGCCellet.NAME.equals(cellet) || null == primitive) {
+            return;
+        }
+        PendingRequest pending = null;
+        try {
+            ActionDialect response = new ActionDialect(primitive);
+            long sn = response.getParamAsLong("sn");
+            pending = this.pendingRequests.get(sn);
+            if (null == pending || !pending.action.equals(response.getName()) || !pending.isCurrent()) {
+                return;
+            }
+            if (System.currentTimeMillis() - futureTimestamp(pending.future) >= FUTURE_CACHE_TTL) {
+                pending.cache.remove(pending.key, pending.future);
+                pending.fail(AIGCStateCode.Expired);
+                this.removePending(pending);
+                return;
+            }
+            Packet packet = new Packet(response);
+            int code = Packet.extractCode(packet);
+            if (code == AIGCStateCode.Processing.code || code == AIGCStateCode.Inferencing.code) {
+                return;
+            }
+            if (code == AIGCStateCode.Ok.code) {
+                this.completeFuture(pending.future, Packet.extractDataPayload(packet));
+            }
+            else {
+                if (pending.future instanceof TextToFileFuture) {
+                    synchronized (pending.future) {
+                        ((TextToFileFuture) pending.future).stateCode = code;
+                    }
+                }
+                else {
+                    pending.fail(AIGCStateCode.parse(code));
+                }
+            }
+            this.removePending(pending);
+        } catch (RuntimeException e) {
+            if (null != pending && pending.isCurrent()) {
+                pending.fail(AIGCStateCode.DataStructureError);
+                this.removePending(pending);
+                Logger.w(Manager.class, "#onReceived - Invalid response, action: " + pending.action +
+                        ", sn: " + pending.sn, e);
+            }
+        }
+    }
 
-        if (AIGCAction.TextToFile.name.equals(action)) {
-            Packet responsePacket = new Packet(actionDialect);
-            // 状态码
-            int stateCode = Packet.extractCode(responsePacket);
-            JSONObject responseJson = Packet.extractDataPayload(responsePacket);
-            long sn = responseJson.getLong("sn");
-            TextToFileFuture future = this.textToFileFutureMap.get(sn);
-            if (stateCode == AIGCStateCode.Ok.code) {
-                try {
-                    future.stateCode = stateCode;
-
-                    JSONObject result = responseJson.getJSONObject("result");
-
-                    if (result.has("fileLabels")) {
-                        JSONArray array = result.getJSONArray("fileLabels");
-                        for (int i = 0; i < array.length(); ++i) {
-                            FileLabels.reviseFileLabel(array.getJSONObject(i), future.token,
+    /** 在同一对象锁中发布结果和完成状态，与 toJSON 保持一致。 */
+    private void completeFuture(JSONable future, JSONObject data) {
+        synchronized (future) {
+            if (future instanceof TextToFileFuture) {
+                TextToFileFuture f = (TextToFileFuture) future;
+                JSONObject result = data.getJSONObject("result");
+                for (String name : Arrays.asList("fileLabels", "answerFileLabels", "queryFileLabels")) {
+                    if (result.has(name)) {
+                        JSONArray files = result.getJSONArray(name);
+                        for (int i = 0; i < files.length(); ++i) {
+                            FileLabels.reviseFileLabel(files.getJSONObject(i), f.token,
                                     this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
                         }
                     }
-
-                    if (result.has("answerFileLabels")) {
-                        JSONArray answerFileLabels = result.getJSONArray("answerFileLabels");
-                        for (int i = 0; i < answerFileLabels.length(); ++i) {
-                            FileLabels.reviseFileLabel(answerFileLabels.getJSONObject(i), future.token,
-                                    this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
-                        }
-                    }
-
-                    if (result.has("queryFileLabels")) {
-                        JSONArray queryFileLabels = result.getJSONArray("queryFileLabels");
-                        for (int i = 0; i < queryFileLabels.length(); ++i) {
-                            FileLabels.reviseFileLabel(queryFileLabels.getJSONObject(i), future.token,
-                                    this.performer.getExternalHttpEndpoint(), this.performer.getExternalHttpsEndpoint());
-                        }
-                    }
-
-                    future.result = result;
-                } catch (Exception e) {
-                    Logger.w(this.getClass(), "#onReceived", e);
                 }
+                f.result = result;
+                f.stateCode = AIGCStateCode.Ok.code;
             }
-            else {
-                if (null != future) {
-                    future.stateCode = stateCode;
+            else if (future instanceof SpeechRecognitionFuture) {
+                SpeechRecognitionInfo result = new SpeechRecognitionInfo(data);
+                if (null == result.file) {
+                    throw new IllegalArgumentException("Missing speech recognition file");
                 }
+                SpeechRecognitionFuture f = (SpeechRecognitionFuture) future;
+                f.result = result;
+                f.stateCode = AIGCStateCode.Ok;
             }
-        }
-        else if (AIGCAction.AutomaticSpeechRecognition.name.equals(action)) {
-            Packet responsePacket = new Packet(actionDialect);
-            // 状态码
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode == AIGCStateCode.Ok.code) {
-                Logger.d(this.getClass(), "#onReceived - Automatic speech recognition response");
-                // 获取结果数据
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                SpeechRecognitionInfo result = new SpeechRecognitionInfo(resultJson);
-                String queryCode = FileUtils.fastHash((null != result.file.externalURL)
-                        ? result.file.externalURL : result.file.getFileCode());
-                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(queryCode);
-                if (null != future) {
-                    future.result = result;
-                    future.stateCode = AIGCStateCode.Ok;
+            else if (future instanceof SpeechEmotionRecognitionFuture) {
+                SpeechEmotion result = new SpeechEmotion(data);
+                if (null == result.file) {
+                    throw new IllegalArgumentException("Missing speech emotion file");
                 }
-                else {
-                    Logger.d(this.getClass(), "#onReceived - Speech recognition timeout: " + result.file.getFileCode());
-                }
+                SpeechEmotionRecognitionFuture f = (SpeechEmotionRecognitionFuture) future;
+                f.result = result;
+                f.stateCode = AIGCStateCode.Ok;
             }
-            else {
-                Logger.d(this.getClass(), "#onReceived - Automatic speech recognition failed: " + stateCode);
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                String queryCode = FileUtils.fastHash(resultJson.has("fileUrl") ?
-                        resultJson.getString("fileUrl") : resultJson.getString("fileCode"));
-                SpeechRecognitionFuture future = this.speechRecognitionFutureMap.get(queryCode);
-                if (null != future) {
-                    future.stateCode = AIGCStateCode.parse(stateCode);
+            else if (future instanceof SpeechDiarizationFuture) {
+                VoiceDiarization result = new VoiceDiarization(data);
+                if (null == result.file) {
+                    throw new IllegalArgumentException("Missing diarization file");
                 }
+                SpeechDiarizationFuture f = (SpeechDiarizationFuture) future;
+                f.diarization = result;
+                f.stateCode = AIGCStateCode.Ok;
             }
-        }
-        else if (AIGCAction.FacialExpressionRecognition.name.equals(action)) {
-            Packet responsePacket = new Packet(actionDialect);
-            // 状态码
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode == AIGCStateCode.Ok.code) {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                FacialExpressionResult result = new FacialExpressionResult(resultJson);
-                FacialExpressionRecognitionFuture future = this.facialExpressionRecognitionFutureMap.get(result.file.getFileCode());
-                if (null != future) {
-                    future.result = result;
-                    future.stateCode = AIGCStateCode.Ok;
-                }
-                else {
-                    Logger.w(this.getClass(), "#onReceived - Facial expression recognition timeout: " + result.file.getFileCode());
-                }
-            }
-            else {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                String fileCode = resultJson.getString("fileCode");
-                FacialExpressionRecognitionFuture future = this.facialExpressionRecognitionFutureMap.get(fileCode);
-                if (null != future) {
-                    future.stateCode = AIGCStateCode.parse(stateCode);
-                }
-            }
-        }
-        else if (AIGCAction.SpeechEmotionRecognition.name.equals(action)) {
-            Packet responsePacket = new Packet(actionDialect);
-            // 状态码
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode == AIGCStateCode.Ok.code) {
-                // 获取结果数据
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                SpeechEmotion result = new SpeechEmotion(resultJson);
-                SpeechEmotionRecognitionFuture future = this.speechEmotionRecognitionFutureMap.get(result.file.getFileCode());
-                if (null != future) {
-                    future.result = result;
-                    future.stateCode = AIGCStateCode.Ok;
-                }
-                else {
-                    Logger.w(this.getClass(), "#onReceived - Speech emotion recognition timeout: " + result.file.getFileCode());
-                }
-            }
-            else {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                String fileCode = resultJson.getString("fileCode");
-                SpeechEmotionRecognitionFuture future = this.speechEmotionRecognitionFutureMap.get(fileCode);
-                if (null != future) {
-                    future.stateCode = AIGCStateCode.parse(stateCode);
-                }
-            }
-        }
-        else if (AIGCAction.SpeechDiarization.name.equals(action)) {
-            Packet responsePacket = new Packet(actionDialect);
-            // 状态码
-            int stateCode = Packet.extractCode(responsePacket);
-            if (stateCode == AIGCStateCode.Ok.code) {
-                // 获取结果数据
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                VoiceDiarization result = new VoiceDiarization(resultJson);
-                String queryCode = FileUtils.fastHash((null != result.file.externalURL)
-                        ? result.file.externalURL : result.file.getFileCode());
-                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(queryCode);
-                if (null != future) {
-                    future.diarization = result;
-                    future.stateCode = AIGCStateCode.Ok;
-                }
-                else {
-                    Logger.w(this.getClass(), "#onReceived - Speech diarization timeout: " + result.file.getFileCode());
-                }
-            }
-            else {
-                JSONObject resultJson = Packet.extractDataPayload(responsePacket);
-                String queryCode = FileUtils.fastHash(resultJson.has("fileUrl") ?
-                        resultJson.getString("fileUrl") : resultJson.getString("fileCode"));
-                SpeechDiarizationFuture future = this.speechDiarizationFutureMap.get(queryCode);
-                if (null != future) {
-                    future.stateCode = AIGCStateCode.parse(stateCode);
-                }
+            else if (future instanceof FacialExpressionRecognitionFuture) {
+                FacialExpressionResult result = new FacialExpressionResult(data);
+                FacialExpressionRecognitionFuture f = (FacialExpressionRecognitionFuture) future;
+                f.result = result;
+                f.stateCode = AIGCStateCode.Ok;
             }
         }
     }
@@ -3412,7 +3512,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         @Override
-        public JSONObject toJSON() {
+        public synchronized JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("sn", this.sn);
             json.put("timestamp", this.timestamp);
@@ -3506,10 +3606,11 @@ public class Manager implements Tickable, PerformerListener {
             this.fileCode = fileCode;
             this.fileUrl = fileUrl;
             this.result = result;
+            this.stateCode = AIGCStateCode.Ok;
         }
 
         @Override
-        public JSONObject toJSON() {
+        public synchronized JSONObject toJSON() {
             JSONObject json = new JSONObject();
             if (null != this.queryCode) {
                 json.put("queryCode", this.queryCode);
@@ -3548,7 +3649,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         @Override
-        public JSONObject toJSON() {
+        public synchronized JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("fileCode", this.fileCode);
             json.put("timestamp", this.timestamp);
@@ -3601,7 +3702,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         @Override
-        public JSONObject toJSON() {
+        public synchronized JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("queryCode", this.queryCode);
             json.put("timestamp", this.timestamp);
@@ -3638,7 +3739,7 @@ public class Manager implements Tickable, PerformerListener {
         }
 
         @Override
-        public JSONObject toJSON() {
+        public synchronized JSONObject toJSON() {
             JSONObject json = new JSONObject();
             json.put("fileCode", this.fileCode);
             json.put("timestamp", this.timestamp);

@@ -37,6 +37,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -128,7 +129,7 @@ public class Performer implements TalkListener, Tickable {
     /**
      * 定时回调清单。
      */
-    private List<Tickable> tickableList;
+    private final CopyOnWriteArrayList<Tickable> tickableList;
 
     /**
      * 流服务器。
@@ -153,7 +154,7 @@ public class Performer implements TalkListener, Tickable {
         this.validAuthTokenMap = new ConcurrentHashMap<>();
         this.transmissionMap = new ConcurrentHashMap<>();
         this.blockMap = new ConcurrentHashMap<>();
-        this.tickableList = new ArrayList<>();
+        this.tickableList = new CopyOnWriteArrayList<>();
         this.streamServer = new StreamServer();
     }
 
@@ -328,13 +329,16 @@ public class Performer implements TalkListener, Tickable {
      * @return 返回被选中的导演机。
      */
     private synchronized Director selectDirector(TalkContext talkContext, String celletName) {
+        if (this.directorList.isEmpty()) {
+            return null;
+        }
         Director director = this.talkDirectorMap.get(talkContext);
         if (null != director) {
             return director;
         }
 
         List<Director> directors = this.celletDirectorMap.get(celletName);
-        if (null == directors) {
+        if (null == directors || directors.isEmpty()) {
             director = this.directorList.get(0);
             this.talkDirectorMap.put(talkContext, director);
             return director;
@@ -368,6 +372,9 @@ public class Performer implements TalkListener, Tickable {
      * @return 返回被选中的导演机。
      */
     public synchronized Director selectDirector(String tokenCode, String celletName) {
+        if (null == tokenCode) {
+            return this.selectDirector();
+        }
         Director director = this.tokenDirectorMap.get(tokenCode);
         if (null != director) {
             return director;
@@ -380,7 +387,9 @@ public class Performer implements TalkListener, Tickable {
         }
 
         director = this.selectDirector();
-        this.tokenDirectorMap.put(tokenCode, director);
+        if (null != director) {
+            this.tokenDirectorMap.put(tokenCode, director);
+        }
         return director;
     }
 
@@ -390,6 +399,10 @@ public class Performer implements TalkListener, Tickable {
      * @return
      */
     private synchronized Director selectDirector() {
+        if (this.directorList.isEmpty()) {
+            return null;
+        }
+
         Director selected = null;
 
         int weight = 0;
@@ -473,6 +486,11 @@ public class Performer implements TalkListener, Tickable {
 
     public void setListener(String celletName, PerformerListener listener) {
         this.listenerMap.put(celletName, listener);
+    }
+
+    /** 注销指定监听器，不移除已经被替换的监听器。 */
+    public boolean removeListener(String celletName, PerformerListener listener) {
+        return null != celletName && null != listener && this.listenerMap.remove(celletName, listener);
     }
 
     public void removeTalkContext(TalkContext context) {
@@ -712,19 +730,28 @@ public class Performer implements TalkListener, Tickable {
      * @param actionDialect
      */
     public void transmit(String celletName, ActionDialect actionDialect) {
-        long sn = actionDialect.containsParam("sn") ?
-                actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
+        this.tryTransmit(celletName, actionDialect);
+    }
 
-        Director director = this.selectDirector();
-        if (null == director) {
-            Logger.e(this.getClass(), "Can not connect '" + celletName + "'");
-            return;
+    /** 向服务单元发送数据，返回是否成功交给连接发送。 */
+    public boolean tryTransmit(String celletName, ActionDialect actionDialect) {
+        if (null == celletName || null == actionDialect) {
+            return false;
         }
-
-        // 添加 Performer 记录
-        actionDialect.addParam(this.performerKey, createPerformer(sn));
-
-        director.speaker.speak(celletName, actionDialect);
+        try {
+            Director director = this.selectDirector();
+            if (null == director || null == director.speaker) {
+                Logger.w(this.getClass(), "Can not connect '" + celletName + "'");
+                return false;
+            }
+            long sn = actionDialect.containsParam("sn") ?
+                    actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
+            actionDialect.addParam(this.performerKey, createPerformer(sn));
+            return director.speaker.speak(celletName, actionDialect);
+        } catch (RuntimeException e) {
+            Logger.w(this.getClass(), "#tryTransmit - " + celletName, e);
+            return false;
+        }
     }
 
     /**
@@ -977,6 +1004,9 @@ public class Performer implements TalkListener, Tickable {
     }
 
     protected ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect, long timeout) {
+        if (null == director || null == director.speaker || null == actionDialect) {
+            return null;
+        }
         long sn = actionDialect.containsParam("sn") ?
                 actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
 
@@ -986,33 +1016,34 @@ public class Performer implements TalkListener, Tickable {
         final Block block = new Block(sn);
         this.blockMap.put(block.sn, block);
 
-        if (!director.speaker.speak(celletName, actionDialect)) {
-            this.blockMap.remove(block.sn);
-            return null;
-        }
-
-        long time = System.currentTimeMillis();
-        while (System.currentTimeMillis() - time < timeout) {
-            try {
+        try {
+            if (Thread.currentThread().isInterrupted() || !director.speaker.speak(celletName, actionDialect)) {
+                return null;
+            }
+            long beginning = System.nanoTime();
+            while (null == block.dialect &&
+                    System.nanoTime() - beginning < java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(timeout)) {
+                if (!this.blockMap.containsKey(sn)) {
+                    // stop/restart 已释放等待记录。
+                    break;
+                }
                 Thread.sleep(50);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
             }
-            if (null != block.dialect) {
-                break;
+            ActionDialect response = block.dialect;
+            if (null != response) {
+                response.removeParam(this.performerKey);
+                return response;
             }
-        }
-
-        this.blockMap.remove(block.sn);
-
-        if (null != block.dialect) {
-            // 删除不需要返回的参数 P-KEY
-            block.dialect.removeParam(this.performerKey);
-            return block.dialect;
-        }
-        else {
-            Logger.e(this.getClass(), "Service timeout '" + celletName + "'");
+            Logger.w(this.getClass(), "Service timeout '" + celletName + "'");
             return null;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (RuntimeException e) {
+            Logger.w(this.getClass(), "#syncTransmit - " + celletName, e);
+            return null;
+        } finally {
+            this.blockMap.remove(sn, block);
         }
     }
 
@@ -1033,11 +1064,9 @@ public class Performer implements TalkListener, Tickable {
     }
 
     public void addTickable(Tickable tickable) {
-        if (this.tickableList.contains(tickable)) {
-            return;
+        if (null != tickable) {
+            this.tickableList.addIfAbsent(tickable);
         }
-
-        this.tickableList.add(tickable);
     }
 
     public void removeTickable(Tickable tickable) {
@@ -1071,9 +1100,13 @@ public class Performer implements TalkListener, Tickable {
             if (actionDialect.containsParam(this.performerKey)) {
                 JSONObject performer = actionDialect.getParamAsJson(this.performerKey);
                 Long sn = performer.getLong("sn");
-                final Block block = this.blockMap.remove(sn);
+                final Block block = this.blockMap.get(sn);
                 if (null != block) {
-                    block.dialect = actionDialect;
+                    synchronized (block) {
+                        if (null == block.dialect) {
+                            block.dialect = actionDialect;
+                        }
+                    }
                 }
                 else {
                     Transmission transmission = this.transmissionMap.get(sn);
@@ -1187,7 +1220,7 @@ public class Performer implements TalkListener, Tickable {
 
         public Long sn;
 
-        public ActionDialect dialect;
+        public volatile ActionDialect dialect;
 
         public Block(Long sn) {
             this.sn = sn;
