@@ -1,0 +1,19 @@
+{
+	"storage": {
+		"type"     : "MySQL",
+		"host"     : "211.157.179.34",
+		"port"     : 3306,
+		"schema"   : "lens",
+		"user"     : "baize",
+		"password" : "Baizejingzhi#2023"
+	},
+
+	"preference": {
+		"maxQueueLength" : 20
+	},
+
+	"unit": {
+		"name": "Baize",
+		"contextLength" : 5000
+	}
+}

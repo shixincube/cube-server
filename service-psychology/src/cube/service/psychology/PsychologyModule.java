@@ -122,7 +122,7 @@ public final class PsychologyModule implements ActionModule {
      * <p>只含占位符与默认值，<b>直接使用它即表示配置未按环境定制</b>——
      * 见 {@link #setup(AIGCHost)} 中对占位符的检测。</p>
      */
-    private final static String CONFIG_FILE_TEMPLATE = "psychology.json.template";
+    private final static String CONFIG_FILE_TEMPLATE = "psychology.json";
 
     /**
      * 模板中存储主机与库名的占位符。

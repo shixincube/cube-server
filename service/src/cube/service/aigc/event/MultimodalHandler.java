@@ -30,8 +30,8 @@ public class MultimodalHandler implements EventListener {
             else if (Events.StreamStopped.equalsIgnoreCase(event.name)) {
                 JSONObject payload = event.payload;
                 String id = payload.getString("streamId");
-                // 移除
-                EventCenter.getInstance().removeUnitMeta(id);
+                // 解除流占用，保留路由供最终状态查询和重复停止使用。
+                center.markStreamStopped(id);
             }
             else if (Events.Segment.equalsIgnoreCase(event.name)) {
                 // 分段内容

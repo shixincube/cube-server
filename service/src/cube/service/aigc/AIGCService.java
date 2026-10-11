@@ -2270,13 +2270,14 @@ public class AIGCService extends AbstractModule implements Generatable {
     /**
      * 执行多模态任务。
      *
-     * <p>频道不存在时按频道码自动创建；正在处理或无对应能力单元时拒绝。</p>
+     * <p>频道不存在时按频道码自动创建；流控制按 streamId 定位原单元，
+     * 其他请求按能力名调度。频道正在处理、流未登记或单元不可用时拒绝。</p>
      *
      * @param tokenCode 访问令牌码。
      * @param channelCode 频道码。
      * @param input 多模态输入。
      * @param listener 监听器。
-     * @return 任务受理返回 {@code true}；服务未就绪、频道正在处理或无单元
+     * @return 任务受理返回 {@code true}；服务未就绪、频道正在处理、流未登记或无可用单元
      *         返回 {@code false}。
      */
     public boolean executeMultimodal(String tokenCode, String channelCode,
@@ -2300,16 +2301,33 @@ public class AIGCService extends AbstractModule implements Generatable {
             return false;
         }
 
-        channel.setProcessing(true);
-
-        // 查找单元
-        AIGCUnit unit = this.selectUnitByName(input.unit);
+        // 流控制必须回到生成 streamId 的单元，不能重新按能力名调度。
+        String operation = (null != input.option)
+                ? input.option.optString("operation", "").trim().toLowerCase(Locale.ROOT) : "";
+        AIGCUnit unit;
+        if ("status".equals(operation) || "stop".equals(operation) || "update".equals(operation)) {
+            String streamId = input.option.optString("streamId", "").trim();
+            UnitMeta streamMeta = streamId.isEmpty() ? null : EventCenter.getInstance().getUnitMeta(streamId);
+            if (!(streamMeta instanceof MultimodalUnitMeta)) {
+                Logger.w(AIGCService.class, "#executeMultimodal - Unknown stream: " + streamId);
+                return false;
+            }
+            unit = streamMeta.unit;
+            if (null == unit.getContext() || !unit.getContext().isValid()) {
+                Logger.w(AIGCService.class, "#executeMultimodal - Stream unit is unavailable: " + streamId);
+                return false;
+            }
+            input.unit = unit.getCapability().getName();
+        }
+        else {
+            unit = this.selectUnitByName(input.unit);
+        }
         if (null == unit) {
             Logger.w(AIGCService.class, "#executeMultimodal - No task unit setup in server: " + input.unit);
-            channel.setProcessing(false);
             return false;
         }
 
+        channel.setProcessing(true);
         final MultimodalUnitMeta meta = new MultimodalUnitMeta(this, unit, channel, input, listener);
 
         // 取队列 → 起任务 → 收尾，统一由单元任务队列执行器处理

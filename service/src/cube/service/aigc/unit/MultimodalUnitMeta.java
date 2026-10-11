@@ -52,6 +52,7 @@ public class MultimodalUnitMeta extends UnitMeta {
 
     @Override
     public void process() {
+        boolean processingReleased = false;
         try {
             Logger.d(this.getClass(), "#process - Model: " + this.unit.getCapability().getName());
 
@@ -151,6 +152,19 @@ public class MultimodalUnitMeta extends UnitMeta {
                     responseText, thoughtText, resultPayload);
             // 关联用量信息
             this.output.usage = usage;
+            // 在应答前同步登记路由，不依赖用量信息或 starting 状态。
+            if (null != resultPayload && resultPayload.has("streamId")) {
+                String streamId = resultPayload.getString("streamId");
+                EventCenter center = EventCenter.getInstance();
+                center.putUnitMeta(streamId, this);
+                String status = resultPayload.optString("status", "");
+                if ("stopped".equalsIgnoreCase(status) || "failed".equalsIgnoreCase(status)) {
+                    center.markStreamStopped(streamId);
+                }
+            }
+            // 客户端收到应答即可提交下一次控制请求。
+            this.channel.setProcessing(false);
+            processingReleased = true;
             this.listener.onResponse(this.channel, this.output);
 
             // 更新用量
@@ -158,19 +172,6 @@ public class MultimodalUnitMeta extends UnitMeta {
                 this.service.getExecutor().execute(new Runnable() {
                     @Override
                     public void run() {
-                        if (output.resultPayload.has("streamId") && output.resultPayload.has("status")) {
-                            String id = output.resultPayload.getString("streamId");
-                            String status = output.resultPayload.getString("status");
-
-                            if (status.equalsIgnoreCase("starting")) {
-                                // 将 UnitMeta 记录到事件中心
-                                EventCenter.getInstance().putUnitMeta(id, MultimodalUnitMeta.this);
-                            } else if (status.equalsIgnoreCase("stopping")) {
-                                // 将 UnitMeta 移除事件中心
-                                EventCenter.getInstance().removeUnitMeta(id);
-                            }
-                        }
-
                         if (output.usage.inputTokens != 0 && output.usage.outputTokens != 0) {
                             Logger.d(MultimodalUnitMeta.class, "Update token usage: " +
                                     output.usage.inputTokens + "/" + output.usage.outputTokens);
@@ -186,7 +187,9 @@ public class MultimodalUnitMeta extends UnitMeta {
             Logger.e(this.getClass(), "#process", e);
             this.listener.onFailed(this.channel, AIGCStateCode.IllegalOperation);
         } finally {
-            this.channel.setProcessing(false);
+            if (!processingReleased) {
+                this.channel.setProcessing(false);
+            }
         }
     }
 }
