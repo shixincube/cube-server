@@ -73,6 +73,8 @@
 			<class>cube.dispatcher.conference.ConferenceCellet</class>
 			<class>cube.dispatcher.ferry.FerryCellet</class>
 			<class>cube.dispatcher.hub.HubCellet</class>
+			<class>cube.dispatcher.aigc.AIGCCellet</class>
+			<class>cube.dispatcher.cv.CVCellet</class>
 		</cellet>
 	</cellets>
 

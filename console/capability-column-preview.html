@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI单元台账 · 能力列改版对比</title>
+<style>
+  :root{
+    --brand-50:#eef2ff; --brand-100:#e0e7ff; --brand-200:#c7d2fe; --brand-600:#4f46e5; --brand-700:#4338ca;
+    --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-300:#cbd5e1; --slate-400:#94a3b8;
+    --slate-500:#64748b; --slate-600:#475569; --slate-700:#334155; --slate-800:#1e293b; --slate-900:#0f172a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:28px; background:#f1f5f9; color:var(--slate-800);
+    font:13px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  h1{font-size:18px; margin:0 0 4px; color:var(--slate-900);}
+  .lead{color:var(--slate-500); font-size:12px; margin:0 0 22px;}
+  .card{background:#fff; border:1px solid var(--slate-200); border-radius:10px; margin-bottom:26px; overflow:hidden;}
+  .card-hd{padding:14px 18px; border-bottom:1px solid var(--slate-200); background:var(--slate-50);}
+  .card-hd h2{margin:0; font-size:13px; color:var(--slate-900);}
+  .card-hd p{margin:3px 0 0; font-size:11px; color:var(--slate-400);}
+  .tag{display:inline-block; font-size:10px; padding:1px 7px; border-radius:999px; margin-left:8px; vertical-align:1px;}
+  .tag-old{background:#fee2e2; color:#b91c1c;}
+  .tag-new{background:#dcfce7; color:#15803d;}
+  .tbl-wrap{padding:0; overflow-x:auto;}
+  table{width:100%; border-collapse:collapse; text-align:left; font-size:13px; table-layout:fixed; min-width:1000px;}
+  thead th{
+    border-bottom:1px solid var(--slate-200); background:rgba(248,250,252,.7);
+    padding:10px 12px; font-size:12px; font-weight:600; color:var(--slate-500); white-space:nowrap;
+  }
+  tbody td{border-bottom:1px solid #f1f5f9; padding:12px; vertical-align:middle; color:var(--slate-700);}
+  tbody tr:last-child td{border-bottom:none;}
+  tbody tr:hover{background:rgba(248,250,252,.7);}
+  .num{font-variant-numeric:tabular-nums; color:var(--slate-400);}
+  .unit{font-weight:500; color:var(--slate-800); overflow-wrap:break-word;}
+  .unit small{display:block; font-size:11px; color:var(--slate-400); font-variant-numeric:tabular-nums; font-weight:400;}
+  .pill{display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:500; padding:2px 9px; border-radius:999px;}
+  .pill i{width:6px; height:6px; border-radius:50%; display:block;}
+  .on{background:#ecfdf5; color:#047857; box-shadow:inset 0 0 0 1px #a7f3d0;}
+  .on i{background:#10b981;}
+  .nowrap{font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .dim{color:var(--slate-400);}
+
+  /* ===== 旧版：truncate ===== */
+  .old{display:flex; flex-wrap:wrap; gap:4px;}
+  .old span.chip{
+    display:inline-flex; max-width:100%; align-items:center; gap:4px;
+    background:var(--slate-100); border-radius:6px; padding:2px 6px; font-size:11px;
+  }
+  .old .trunc{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--slate-700); font-weight:500;}
+  .old .trunc.sub{color:var(--slate-400); font-weight:400;}
+
+  /* ===== 新版：分组 + 换行 + 折叠 ===== */
+  .cap-list{display:flex; flex-direction:column; gap:6px;}
+  .cap-group + .cap-group{margin-top:2px;}
+  .cap-gh{display:flex; align-items:center; gap:4px;}
+  .cap-gh svg{color:var(--slate-400); flex:none;}
+  .cap-gh b{font-size:10px; font-weight:500; letter-spacing:.03em; color:var(--slate-500);}
+  .cap-gh i{font-size:10px; font-style:normal; color:var(--slate-300); font-variant-numeric:tabular-nums;}
+  .cap-items{list-style:none; margin:2px 0 0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  .cap-items li{border-radius:6px; padding:4px 6px; box-shadow:inset 0 0 0 1px; background-clip:padding-box;}
+  .cap-row{display:flex; align-items:flex-start; gap:6px;}
+  .cap-name{flex:1 1 auto; min-width:0; overflow-wrap:break-word; font-size:11px; font-weight:500; line-height:16px;}
+  .cap-ver{flex:none; font-size:10px; font-variant-numeric:tabular-nums; opacity:.6;}
+  .cap-sub{overflow-wrap:break-word; font-size:10px; line-height:16px; opacity:.7; margin-top:1px;}
+  .cap-more{
+    background:none; border:none; padding:0; margin-left:2px; cursor:pointer;
+    font-size:inherit; text-decoration:underline dotted; text-underline-offset:2px; opacity:.75;
+  }
+  .cap-more:hover{opacity:1;}
+  .cap-expand{
+    display:inline-flex; align-items:center; gap:4px; background:none; border:none; padding:0; cursor:pointer;
+    font-size:10px; color:var(--slate-400);
+  }
+  .cap-expand:hover{color:var(--slate-600);}
+  .cap-expand svg{transition:transform .15s;}
+
+  /* 色板：与组件一致 */
+  .sky{background:#f0f9ff; color:#0369a1; box-shadow-color:#bae6fd;}
+  .violet{background:#f5f3ff; color:#6d28d9; box-shadow-color:#ddd6fe;}
+  .emerald{background:#ecfdf5; color:#047857; box-shadow-color:#a7f3d0;}
+  .amber{background:#fffbeb; color:#b45309; box-shadow-color:#fde68a;}
+  .teal{background:#f0fdfa; color:#0f766e; box-shadow-color:#99f6e4;}
+  .slatec{background:var(--slate-100); color:var(--slate-700); box-shadow-color:var(--slate-200);}
+  .legend{display:flex; flex-wrap:wrap; gap:8px; padding:12px 18px; border-top:1px solid var(--slate-200); background:var(--slate-50);}
+  .lg{display:inline-flex; align-items:center; gap:5px; font-size:11px; color:var(--slate-500);}
+  .lg i{width:9px; height:9px; border-radius:3px; display:block;}
+</style>
+</head>
+<body>
+
+<h1>AI单元台账 · 「能力」列改版</h1>
+<p class="lead">同一份真实数据（Unit-200103 挂了 11 项能力，含超长子任务），对比改版前后的可读性。</p>
+
+<div class="card">
+  <div class="card-hd">
+    <h2>改版前<span class="tag tag-old">truncate 截断</span></h2>
+    <p>能力名与子任务各占一个 truncate 槽位，二者抢同一行宽度 —— 长名字被压成「A…」「S…」，信息不可读。</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th><th style="width:112px">单元</th><th style="width:84px">状态</th>
+        <th style="width:76px">当日活动</th><th style="width:100px">当日在线时长</th><th style="width:128px">最近活动</th>
+        <th style="width:96px">近 30 天活跃</th><th style="width:222px">能力</th><th style="width:132px">设备</th>
+      </tr></thead>
+      <tbody id="oldBody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-hd">
+    <h2>改版后<span class="tag tag-new">分组 · 换行 · 折叠</span></h2>
+    <p>按任务类型分组着色，能力名换行不截断，子任务折叠为「+N」，超量能力给「展开其余 N 项」。</p>
+  </div>
+  <div class="tbl-wrap">
+    <table>
+      <thead><tr>
+        <th style="width:40px">#</th><th style="width:112px">单元</th><th style="width:84px">状态</th>
+        <th style="width:76px">当日活动</th><th style="width:100px">当日在线时长</th><th style="width:128px">最近活动</th>
+        <th style="width:96px">近 30 天活跃</th><th style="width:260px">能力</th><th style="width:132px">设备</th>
+      </tr></thead>
+      <tbody id="newBody"></tbody>
+    </table>
+  </div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<script>
+/* 与 AppIcon.vue 同源的 24x24 描边图标 */
+const ICONS = {
+  chat:'<path d="M20.5 11.6a8 8 0 0 1-11.6 7.2L3.5 20.5l1.7-5.4A8 8 0 1 1 20.5 11.6Z"/>',
+  layers:'<path d="M12 2.8l9 4.7-9 4.7-9-4.7Z"/><path d="M3 12.5l9 4.7 9-4.7"/><path d="M3 17.2l9 4.7 9-4.7"/>',
+  eye:'<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>',
+  mic:'<rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3.5"/>',
+  database:'<ellipse cx="12" cy="5.5" rx="8.5" ry="3"/><path d="M20.5 12c0 1.66-3.8 3-8.5 3s-8.5-1.34-8.5-3"/><path d="M3.5 5.5v13c0 1.66 3.8 3 8.5 3s8.5-1.34 8.5-3v-13"/>',
+  cube:'<path d="M12 2.5l9 5v9l-9 5-9-5v-9Z"/><path d="M3 7.5l9 5 9-5M12 12.5V22.5"/>',
+  chevronDown:'<path d="M6 9l6 6 6-6"/>'
+};
+function svg(name,size){
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+    stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex:none">${ICONS[name]||''}</svg>`;
+}
+
+const TASK_META = {
+  NaturalLanguageProcessing:{label:'自然语言', cls:'sky',    icon:'chat'},
+  Multimodal:               {label:'多模态',   cls:'violet', icon:'layers'},
+  ComputerVision:           {label:'计算机视觉',cls:'emerald',icon:'eye'},
+  AudioProcessing:          {label:'音频处理', cls:'amber',  icon:'mic'},
+  DataProcessing:           {label:'数据处理', cls:'teal',   icon:'database'},
+  OtherProcessing:          {label:'其它',     cls:'slatec', icon:'cube'}
+};
+
+/* 取自截图中的真实形态：Unit-200103 挂了 11 项，含超长名与多子任务 */
+const UNITS = [
+  { id:201011, name:'Unit-201011', state:'在线', active:'2 次', dur:'15.99 小时', last:'10-11 15:21:45', days:'12 天',
+    caps:[
+      {name:'OmniMultimodal', task:'Multimodal', version:'1.0', subtasks:['FeatureExtraction']},
+      {name:'OmniVLV', task:'Multimodal', version:'1.0', subtasks:['VisualQuestionAnswering']},
+      {name:'Speech', task:'AudioProcessing', version:'1.0', subtasks:['AutomaticSpeechRecognition']}
+    ]},
+  { id:200103, name:'Unit-200103', state:'在线', active:'--', dur:'--', last:'10-11 15:21:35', days:'10 天',
+    caps:[
+      {name:'AudioDiarizationPipeline', task:'AudioProcessing', version:'2.1',
+       subtasks:['SpeakerDiarization','SpeakerIdentification','SpeakerVerification','VoiceActivityDetection']},
+      {name:'Psychology', task:'OtherProcessing', version:'1.0', subtasks:['Speech','AutomaticSpeechRecognition']},
+      {name:'MultimodalEmbedding', task:'Multimodal', version:'1.0', subtasks:['ImageTextToText','TextToImage']},
+      {name:'KnowledgeQA', task:'NaturalLanguageProcessing', version:'3.0', subtasks:['QuestionAnswering','RetrieveReRank']},
+      {name:'FaceDetect', task:'ComputerVision', version:'1.2', subtasks:['FaceDetection']},
+      {name:'DocParser', task:'DataProcessing', version:'1.0', subtasks:['ExtractURLContent']},
+      {name:'SemanticIndex', task:'NaturalLanguageProcessing', version:'2.4', subtasks:['SemanticSearch']},
+      {name:'EmotionSense', task:'AudioProcessing', version:'1.1', subtasks:['SpeechEmotionRecognition']},
+      {name:'ASR', task:'AudioProcessing', version:'4.0', subtasks:['AutomaticSpeechRecognition']},
+      {name:'OCR', task:'ComputerVision', version:'1.0', subtasks:['TextRecognition']},
+      {name:'Legacy', task:'OtherProcessing', version:'0.9', subtasks:[]}
+    ]},
+  { id:201053, name:'Unit-201053', state:'在线', active:'--', dur:'--', last:'10-11 15:21:34', days:'6 天',
+    caps:[
+      {name:'Baize2', task:'NaturalLanguageProcessing', version:'2.0', subtasks:['FeatureExtraction']},
+      {name:'Speech', task:'AudioProcessing', version:'1.0', subtasks:['AutomaticSpeechRecognition']}
+    ]},
+  { id:200111, name:'Unit-200111', state:'在线', active:'--', dur:'--', last:'10-11 15:21:34', days:'10 天',
+    caps:[
+      {name:'AudioDiarizationPipeline', task:'AudioProcessing', version:'2.1',
+       subtasks:['SpeakerDiarization','SpeakerIdentification','SpeakerVerification']},
+      {name:'Speech', task:'AudioProcessing', version:'1.0', subtasks:['AutomaticSpeechRecognition']}
+    ]}
+];
+
+const subs = c => c.subtask ? [c.subtask] : (c.subtasks || []);
+const distinctSubs = c => {
+  const n = (c.name||'').toLowerCase();
+  return subs(c).filter(s => s.toLowerCase() !== n);
+};
+
+/* 旧版渲染 */
+document.getElementById('oldBody').innerHTML = UNITS.map((u,i)=>{
+  const chips = u.caps.map(c=>{
+    const sub = distinctSubs(c);
+    const subText = sub.join(' / ');
+    return `<span class="chip"><span class="trunc">${c.name}</span>` +
+           (subText?`<span class="trunc sub">${subText}</span>`:'') + `</span>`;
+  }).join('');
+  return row(i,u,`<div class="old">${chips}</div>`);
+}).join('');
+
+/* 新版渲染 */
+const COLLAPSE_AFTER = 6;
+document.getElementById('newBody').innerHTML = UNITS.map((u,i)=>{
+  const buckets = new Map();
+  u.caps.forEach(c=>{
+    const t = c.task || 'OtherProcessing';
+    if(!buckets.has(t)) buckets.set(t,[]);
+    buckets.get(t).push(c);
+  });
+  const groups = [...buckets.entries()]
+    .map(([task,items])=>({task, items:[...items].sort((a,b)=>a.name.localeCompare(b.name))}))
+    .sort((a,b)=>(TASK_META[a.task].label).localeCompare(TASK_META[b.task].label,'zh-Hans-CN'));
+
+  let budget = COLLAPSE_AFTER, visible = [], hidden = 0;
+  if (groups.length){
+    for(const g of groups){
+      if(budget<=0) break;
+      const items = g.items.slice(0,budget);
+      visible.push({...g, items}); budget -= g.items.length;
+    }
+    hidden = u.caps.length - visible.reduce((n,g)=>n+g.items.length,0);
+  }
+
+  let html = '<div class="cap-list">';
+  for(const g of visible){
+    const m = TASK_META[g.task];
+    html += `<div class="cap-group"><div class="cap-gh">${svg(m.icon,11)}<b>${m.label}</b><i>${g.items.length}</i></div><ul class="cap-items">`;
+    g.items.forEach(c=>{
+      const ds = distinctSubs(c);
+      html += `<li class="${m.cls}" title="${c.name} / ${m.label}">` +
+              `<div class="cap-row"><span class="cap-name">${c.name}</span>` +
+              (c.version?`<span class="cap-ver">v${c.version}</span>`:'') + `</div>`;
+      if(ds.length){
+        html += `<div class="cap-sub">${ds[0]}` +
+                (ds.length>1?`<button class="cap-more">+${ds.length-1}</button>`:'') + `</div>`;
+      }
+      html += `</li>`;
+    });
+    html += '</ul></div>';
+  }
+  if(hidden>0){
+    html += `<button class="cap-expand">${svg('chevronDown',10)} 展开其余 ${hidden} 项（共 ${u.caps.length} 项）</button>`;
+  }
+  html += '</div>';
+  return row(i,u,html);
+}).join('');
+
+function row(i,u,capHtml){
+  return `<tr>
+    <td class="num">${i+1}</td>
+    <td><div class="unit">${u.name}</div><small>${u.id}</small></td>
+    <td><span class="pill on"><i></i>${u.state}</span></td>
+    <td class="nowrap">${u.active}</td>
+    <td class="nowrap">${u.dur}</td>
+    <td class="nowrap" style="font-size:12px">${u.last}</td>
+    <td class="nowrap">${u.days}</td>
+    <td>${capHtml}</td>
+    <td class="dim">--</td>
+  </tr>`;
+}
+
+/* 图例 */
+const used = new Set();
+UNITS.forEach(u=>u.caps.forEach(c=>used.add(c.task||'OtherProcessing')));
+document.getElementById('legend').innerHTML = [...used].map(t=>{
+  const m = TASK_META[t];
+  return `<span class="lg"><i class="${m.cls}" style="box-shadow:inset 0 0 0 1px var(--slate-200)"></i>${m.label}</span>`;
+}).join('');
+
+/* 交互：+N 展开子任务、展开其余 */
+document.querySelectorAll('.cap-more').forEach(b=>{
+  b.addEventListener('click',e=>{
+    const p=b.parentElement, btn=p.querySelector('.cap-more');
+    if(btn.dataset.open==='1'){
+      p.childNodes[0].nodeValue = p.dataset.first; btn.textContent='+'+p.dataset.rest; btn.dataset.open='0';
+    }else{
+      p.dataset.first = p.childNodes[0].nodeValue;
+      p.childNodes[0].nodeValue = [...p.textContent.replace(/\+\d+$/,'').trim().split(' · ')].join(' · ');
+      btn.textContent='收起'; btn.dataset.open='1';
+    }
+  });
+});
+document.querySelectorAll('.cap-items li').forEach(li=>{
+  if(li.querySelector('.cap-more')) li.dataset.first = li.querySelector('.cap-sub').childNodes[0].nodeValue.trim();
+});
+</script>
+</body>
+</html>

@@ -19,6 +19,7 @@ import AppIcon from '@/components/AppIcon.vue'
 import EmptyState from '@/components/EmptyState.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import StatCard from '@/components/StatCard.vue'
+import UnitCapabilityList from '@/components/UnitCapabilityList.vue'
 import { fetchDomains, fetchUnitOverview, pickList } from '@/api/console'
 import type {
   UnitCapability,
@@ -139,50 +140,12 @@ function resetView(): void {
 /* 能力展示                                                            */
 /* ------------------------------------------------------------------ */
 
-/** 能力所属任务类型的中文名，未收录时回退为原始值 */
-const TASK_LABEL: Record<string, string> = {
-  NaturalLanguageProcessing: '自然语言处理',
-  Multimodal: '多模态',
-  ComputerVision: '计算机视觉',
-  AudioProcessing: '音频处理',
-  DataProcessing: '数据处理',
-  OtherProcessing: '其它'
-}
-
-const taskLabel = (task: string): string => TASK_LABEL[task] ?? (task || '--')
-
-/** 子任务原始文案：后端单子任务给字符串，多子任务给数组 */
-const rawSubtaskText = (capability: UnitCapability): string =>
-  capability.subtask ?? (capability.subtasks ?? []).join(' / ')
-
 /**
- * 芯片上展示的子任务。
+ * 该实体当前承载的能力。
  *
- * 多数能力的主子任务与能力同名（如 TextGeneration / TextGeneration），
- * 重复展示只是噪音，这里与能力名相同就不再输出。
+ * 分组、配色、图标、折叠等展示逻辑见 `UnitCapabilityList`——
+ * 台账一行可能有十来个能力，全部挤在本单元里会让这个视图臃肿。
  */
-const subtaskText = (capability: UnitCapability): string => {
-  const text = rawSubtaskText(capability)
-  return text.toLowerCase() === (capability.name ?? '').toLowerCase() ? '' : text
-}
-
-/** 悬浮提示给出完整信息，便于区分同名能力 */
-const capabilityTitle = (capability: UnitCapability): string => {
-  const lines = [`能力：${capability.name}`]
-  const subtask = rawSubtaskText(capability)
-  if (subtask) {
-    lines.push(`子任务：${subtask}`)
-  }
-  lines.push(`任务类型：${taskLabel(capability.task)}`)
-  if (capability.version) {
-    lines.push(`版本：${capability.version}`)
-  }
-  if (capability.description) {
-    lines.push(capability.description)
-  }
-  return lines.join('\n')
-}
-
 const capabilitiesOf = (unit: UnitInfo): UnitCapability[] => unit.capabilities ?? []
 
 /** 能力数据的新鲜度说明：能力靠节点周期上报，为空时要让用户知道原因 */
@@ -476,7 +439,9 @@ onMounted(bootstrap)
       </div>
 
       <div v-else-if="units.length > 0" class="overflow-x-auto">
-        <table class="data-table data-table-dense table-fixed min-w-[58rem]">
+        <!-- min-w 覆盖各列固定宽之和（能力列 260px 后为 62rem），
+             保证 table-fixed 不被压缩、能力名不会因总宽不足而换行错位。 -->
+        <table class="data-table data-table-dense table-fixed min-w-[62rem]">
           <thead>
             <tr>
               <th class="w-10">#</th>
@@ -520,9 +485,9 @@ onMounted(bootstrap)
               <th class="w-[100px]">当日在线时长</th>
               <th class="w-32">最近活动</th>
               <th class="w-24">近 30 天活跃</th>
-              <!-- 「能力」取 222px：这是 1280 视口下（最窄目标）能容纳的宽度。 -->
-              <!-- 宽屏剩余空间由 table-fixed 按列宽比例分摊，避免该列独吞空白。 -->
-              <th class="w-[222px]">能力</th>
+              <!-- 「能力」取 260px：分组后每行是「类型头 + 能力名」，需要容纳最长的一组。
+                   宽屏剩余空间由 table-fixed 按列宽比例分摊，避免该列独吞空白。 -->
+              <th class="w-[260px]">能力</th>
               <th class="w-[132px]">设备</th>
             </tr>
           </thead>
@@ -553,26 +518,7 @@ onMounted(bootstrap)
               </td>
               <td class="tabular whitespace-nowrap text-slate-600">{{ unit.activeDays }} 天</td>
               <td>
-                <div v-if="capabilitiesOf(unit).length > 0" class="flex flex-wrap gap-1">
-                  <span
-                    v-for="capability in capabilitiesOf(unit)"
-                    :key="`${capability.name}/${subtaskText(capability)}`"
-                    class="inline-flex max-w-full items-center gap-1 rounded-md bg-slate-100 px-1.5 py-0.5 text-[11px]"
-                    :title="capabilityTitle(capability)"
-                  >
-                    <span class="truncate font-medium text-slate-700">{{ capability.name }}</span>
-                    <span v-if="subtaskText(capability)" class="truncate text-slate-400">
-                      {{ subtaskText(capability) }}
-                    </span>
-                  </span>
-                </div>
-                <span
-                  v-else
-                  class="text-xs text-slate-400"
-                  title="节点尚未上报该实体的能力，节点每约 1 分钟上报一次"
-                >
-                  --
-                </span>
+                <UnitCapabilityList :capabilities="capabilitiesOf(unit)" />
               </td>
               <td>
                 <span class="break-words text-xs text-slate-600">{{ unit.device || '--' }}</span>

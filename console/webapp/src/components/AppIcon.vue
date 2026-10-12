@@ -63,6 +63,11 @@ const ICONS: Record<string, string> = {
     '<path d="M21 12h-6l-2 3h-2l-2-3H3"/><path d="M5.4 5.1L3 12v6a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-6l-2.4-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.8 1.1Z"/>',
   loader:
     '<path d="M12 2v4M12 18v4M4.9 4.9l2.9 2.9M16.2 16.2l2.9 2.9M2 12h4M18 12h4M4.9 19.1l2.9-2.9M16.2 7.8l2.9-2.9"/>',
+  chat: '<path d="M20.5 11.6a8 8 0 0 1-11.6 7.2L3.5 20.5l1.7-5.4A8 8 0 1 1 20.5 11.6Z"/>',
+  layers:
+    '<path d="M12 2.8l9 4.7-9 4.7-9-4.7Z"/><path d="M3 12.5l9 4.7 9-4.7"/><path d="M3 17.2l9 4.7 9-4.7"/>',
+  mic: '<rect x="9" y="2.5" width="6" height="11.5" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0"/><path d="M12 18v3.5"/>',
+  waveform: '<path d="M3 12h2M8 6.5v11M12 3.5v17M16 8v8M20 11h1"/>',
   memory:
     '<rect x="2.5" y="6.5" width="19" height="10.5" rx="2"/><path d="M7 6.5v10.5M12 6.5v10.5M17 6.5v10.5"/><path d="M7.5 17v3.5M12 17v3.5M16.5 17v3.5"/>',
   cube: '<path d="M12 2.5l9 5v9l-9 5-9-5v-9Z"/><path d="M3 7.5l9 5 9-5M12 12.5V22.5"/>'
