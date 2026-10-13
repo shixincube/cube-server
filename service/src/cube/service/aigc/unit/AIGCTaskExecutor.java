@@ -196,6 +196,11 @@ public class AIGCTaskExecutor {
         this.unitQueueExecutor.submit(this.generateTextQueueMap, meta);
     }
 
+    public void removeQueuedGenerateText(UnitMeta meta) {
+        Queue<UnitMeta> queue = this.generateTextQueueMap.get(meta.unit.getQueryKey());
+        if (queue != null) synchronized (queue) { queue.remove(meta); }
+    }
+
     /**
      * 提交多模态任务（独占模式）。
      *

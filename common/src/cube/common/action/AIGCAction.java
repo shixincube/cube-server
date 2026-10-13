@@ -41,6 +41,12 @@ public enum AIGCAction {
      */
     GetConfig("getConfig"),
 
+    /** Stateless, structured chat generation and its persistent event channel. */
+    ChatCompletion("chatCompletion"),
+    ChatCompletionEvent("chatCompletionEvent"),
+    CancelChatCompletion("cancelChatCompletion"),
+    ListChatModels("listChatModels"),
+
     /**
      * 校验令牌。
      */

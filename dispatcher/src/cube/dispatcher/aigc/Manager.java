@@ -32,6 +32,9 @@ import cube.common.entity.*;
 import cube.common.state.AIGCStateCode;
 import cube.dispatcher.Performer;
 import cube.dispatcher.PerformerListener;
+import cube.dispatcher.aigc.completion.CompletionConfig;
+import cube.dispatcher.aigc.completion.CompletionGateway;
+import cube.dispatcher.aigc.completion.CompletionHandler;
 import cube.dispatcher.aigc.handler.*;
 import cube.dispatcher.aigc.handler.app.App;
 import cube.dispatcher.aigc.spi.DispatcherExtension;
@@ -59,6 +62,8 @@ public class Manager implements Tickable, PerformerListener {
 
     private volatile boolean running;
 
+    private final CompletionGateway completions = new CompletionGateway();
+
     private long generation;
 
     private static final long TOKEN_CACHE_TTL = 24L * 60 * 60 * 1000;
@@ -68,7 +73,9 @@ public class Manager implements Tickable, PerformerListener {
     private final Set<HttpServer> initializedHttpServers =
             Collections.newSetFromMap(new WeakHashMap<HttpServer, Boolean>());
 
-    /** 按协议封包序号关联任务，避免 reset 后的旧应答完成新任务。 */
+    /**
+     * 按协议封包序号关联任务，避免 reset 后的旧应答完成新任务。
+     */
     private final Map<Long, PendingRequest> pendingRequests = new ConcurrentHashMap<>();
 
     // 仅在生命周期锁内访问；完成、替换及过期时同步移除两个索引。
@@ -138,6 +145,7 @@ public class Manager implements Tickable, PerformerListener {
             performer.setListener(AIGCCellet.NAME, this);
             this.lastTickTime = System.currentTimeMillis();
             this.running = true;
+            this.completions.start(performer);
         } catch (RuntimeException | Error e) {
             performer.removeListener(AIGCCellet.NAME, this);
             performer.removeTickable(this);
@@ -151,6 +159,7 @@ public class Manager implements Tickable, PerformerListener {
             return;
         }
         this.running = false;
+        this.completions.stop();
         ++this.generation;
         try {
             this.performer.removeListener(AIGCCellet.NAME, this);
@@ -179,7 +188,9 @@ public class Manager implements Tickable, PerformerListener {
         return this.performer;
     }
 
-    /** 不持有生命周期锁等待网络；已经开始的同步请求可以正常结束。 */
+    /**
+     * 不持有生命周期锁等待网络；已经开始的同步请求可以正常结束。
+     */
     private ActionDialect syncTransmit(String cellet, ActionDialect request) {
         Performer current;
         synchronized (this) {
@@ -203,7 +214,7 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     private <K, F extends JSONable> F submitFuture(Packet packet, String token,
-                                                  Map<K, F> cache, K key, F future, boolean reset) {
+                                                   Map<K, F> cache, K key, F future, boolean reset) {
         final PendingRequest pending;
         final Performer current;
         synchronized (this) {
@@ -278,26 +289,22 @@ public class Manager implements Tickable, PerformerListener {
                 if (f.stateCode == AIGCStateCode.Processing.code) {
                     f.stateCode = state.code;
                 }
-            }
-            else if (future instanceof SpeechRecognitionFuture) {
+            } else if (future instanceof SpeechRecognitionFuture) {
                 SpeechRecognitionFuture f = (SpeechRecognitionFuture) future;
                 if (f.stateCode == AIGCStateCode.Processing) {
                     f.stateCode = state;
                 }
-            }
-            else if (future instanceof SpeechEmotionRecognitionFuture) {
+            } else if (future instanceof SpeechEmotionRecognitionFuture) {
                 SpeechEmotionRecognitionFuture f = (SpeechEmotionRecognitionFuture) future;
                 if (f.stateCode == AIGCStateCode.Processing) {
                     f.stateCode = state;
                 }
-            }
-            else if (future instanceof SpeechDiarizationFuture) {
+            } else if (future instanceof SpeechDiarizationFuture) {
                 SpeechDiarizationFuture f = (SpeechDiarizationFuture) future;
                 if (f.stateCode == AIGCStateCode.Processing) {
                     f.stateCode = state;
                 }
-            }
-            else if (future instanceof FacialExpressionRecognitionFuture) {
+            } else if (future instanceof FacialExpressionRecognitionFuture) {
                 FacialExpressionRecognitionFuture f = (FacialExpressionRecognitionFuture) future;
                 if (f.stateCode == AIGCStateCode.Processing) {
                     f.stateCode = state;
@@ -342,6 +349,10 @@ public class Manager implements Tickable, PerformerListener {
 
     private void setupHandler() {
         HttpServer httpServer = this.performer.getHttpServer();
+
+        CompletionConfig completionConfig = new CompletionConfig(this.performer.getProperties());
+        if (completionConfig.enabled)
+            this.registerHandler(httpServer, new CompletionHandler(this.completions, completionConfig));
 
         this.registerHandler(httpServer, new Static());
         this.registerHandler(httpServer, new InterfaceDocument());
@@ -411,8 +422,7 @@ public class Manager implements Tickable, PerformerListener {
         if (ModuleAction.isEnabled()) {
             this.registerHandler(httpServer, new ModuleAction());
             Logger.i(Manager.class, "#setupHandler - Module fallback channel enabled at " + ModuleAction.PATH);
-        }
-        else {
+        } else {
             Logger.i(Manager.class, "#setupHandler - Module fallback channel is DISABLED");
         }
 
@@ -494,8 +504,7 @@ public class Manager implements Tickable, PerformerListener {
             if (null != contactToken) {
                 if (isTokenExpired(contactToken, System.currentTimeMillis())) {
                     this.validTokenMap.remove(token, contactToken);
-                }
-                else if (device.isUnknown() ||
+                } else if (device.isUnknown() ||
                         device.getName().equalsIgnoreCase(contactToken.device.getName())) {
                     return contactToken;
                 }
@@ -616,8 +625,7 @@ public class Manager implements Tickable, PerformerListener {
             JSONObject json = new JSONObject();
             json.put("valid", false);
             return json;
-        }
-        else if (AIGCStateCode.Ok.code == state) {
+        } else if (AIGCStateCode.Ok.code == state) {
             JSONObject json = new JSONObject();
             json.put("valid", true);
             json.put("user", Packet.extractDataPayload(responsePacket));
@@ -902,8 +910,7 @@ public class Manager implements Tickable, PerformerListener {
         payload.put("displayName", displayName);
         if (null != category && category.length() > 0) {
             payload.put("category", category);
-        }
-        else {
+        } else {
             payload.put("category", displayName);
         }
         if (null != scope) {
@@ -1041,8 +1048,7 @@ public class Manager implements Tickable, PerformerListener {
                 result.put("total", list.length());
                 result.put("list", list);
                 return result;
-            }
-            else {
+            } else {
                 return data;
             }
         } catch (Exception e) {
@@ -1360,8 +1366,7 @@ public class Manager implements Tickable, PerformerListener {
                 result.put("total", total);
                 result.put("list", list);
                 return result;
-            }
-            else {
+            } else {
                 return data;
             }
         } catch (Exception e) {
@@ -1817,8 +1822,7 @@ public class Manager implements Tickable, PerformerListener {
             ChatFuture future = new ChatFuture(channel);
             future.end = false;
             return future;
-        }
-        else if (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code) {
+        } else if (Packet.extractCode(responsePacket) == AIGCStateCode.Ok.code) {
             ChatFuture future = null;
             if (Consts.PATTERN_CHAT.equals(pattern)) {
                 JSONObject responseData = Packet.extractDataPayload(responsePacket);
@@ -1826,8 +1830,7 @@ public class Manager implements Tickable, PerformerListener {
                     // 来自 conversation 的结果
                     future = new ChatFuture(new AIGCChannel(responseData.getJSONObject("channel")));
                     future.end = false;
-                }
-                else {
+                } else {
                     GeneratingRecord record = new GeneratingRecord(responseData);
                     if (null == record.query) {
                         record.query = content;
@@ -1835,16 +1838,14 @@ public class Manager implements Tickable, PerformerListener {
                     future = new ChatFuture(record);
                     future.end = true;
                 }
-            }
-            else if (Consts.PATTERN_KNOWLEDGE.equals(pattern)) {
+            } else if (Consts.PATTERN_KNOWLEDGE.equals(pattern)) {
                 KnowledgeQAResult result = new KnowledgeQAResult(Packet.extractDataPayload(responsePacket));
                 future = new ChatFuture(result);
                 future.end = true;
             }
 
             return future;
-        }
-        else {
+        } else {
             Logger.w(Manager.class, "#chat - Response state code is NOT Ok - " + channelCode +
                     " - " + Packet.extractCode(responsePacket));
             return null;
@@ -2187,8 +2188,7 @@ public class Manager implements Tickable, PerformerListener {
         SpeechDiarizationFuture future = null;
         if (queryCode.length() == 64) {
             future = this.speechDiarizationFutureMap.get(FileUtils.fastHash(queryCode));
-        }
-        else {
+        } else {
             future = this.speechDiarizationFutureMap.get(queryCode);
         }
         if (null != future) {
@@ -2766,7 +2766,7 @@ public class Manager implements Tickable, PerformerListener {
     }
 
     public JSONObject getPsychologyReportPart(String token, long sn, boolean content, boolean section, boolean thought,
-                                              boolean summary, boolean rating,  boolean link) {
+                                              boolean summary, boolean rating, boolean link) {
         Performer current = this.activePerformer();
         if (null == current) {
             return null;
@@ -3358,6 +3358,10 @@ public class Manager implements Tickable, PerformerListener {
         PendingRequest pending = null;
         try {
             ActionDialect response = new ActionDialect(primitive);
+            if (AIGCAction.ChatCompletionEvent.name.equals(response.getName())) {
+                this.completions.onEvent(response);
+                return;
+            }
             long sn = response.getParamAsLong("sn");
             pending = this.pendingRequests.get(sn);
             if (null == pending || !pending.action.equals(response.getName()) || !pending.isCurrent()) {
@@ -3376,14 +3380,12 @@ public class Manager implements Tickable, PerformerListener {
             }
             if (code == AIGCStateCode.Ok.code) {
                 this.completeFuture(pending.future, Packet.extractDataPayload(packet));
-            }
-            else {
+            } else {
                 if (pending.future instanceof TextToFileFuture) {
                     synchronized (pending.future) {
                         ((TextToFileFuture) pending.future).stateCode = code;
                     }
-                }
-                else {
+                } else {
                     pending.fail(AIGCStateCode.parse(code));
                 }
             }
@@ -3398,7 +3400,9 @@ public class Manager implements Tickable, PerformerListener {
         }
     }
 
-    /** 在同一对象锁中发布结果和完成状态，与 toJSON 保持一致。 */
+    /**
+     * 在同一对象锁中发布结果和完成状态，与 toJSON 保持一致。
+     */
     private void completeFuture(JSONable future, JSONObject data) {
         synchronized (future) {
             if (future instanceof TextToFileFuture) {
@@ -3415,8 +3419,7 @@ public class Manager implements Tickable, PerformerListener {
                 }
                 f.result = result;
                 f.stateCode = AIGCStateCode.Ok.code;
-            }
-            else if (future instanceof SpeechRecognitionFuture) {
+            } else if (future instanceof SpeechRecognitionFuture) {
                 SpeechRecognitionInfo result = new SpeechRecognitionInfo(data);
                 if (null == result.file) {
                     throw new IllegalArgumentException("Missing speech recognition file");
@@ -3424,8 +3427,7 @@ public class Manager implements Tickable, PerformerListener {
                 SpeechRecognitionFuture f = (SpeechRecognitionFuture) future;
                 f.result = result;
                 f.stateCode = AIGCStateCode.Ok;
-            }
-            else if (future instanceof SpeechEmotionRecognitionFuture) {
+            } else if (future instanceof SpeechEmotionRecognitionFuture) {
                 SpeechEmotion result = new SpeechEmotion(data);
                 if (null == result.file) {
                     throw new IllegalArgumentException("Missing speech emotion file");
@@ -3433,8 +3435,7 @@ public class Manager implements Tickable, PerformerListener {
                 SpeechEmotionRecognitionFuture f = (SpeechEmotionRecognitionFuture) future;
                 f.result = result;
                 f.stateCode = AIGCStateCode.Ok;
-            }
-            else if (future instanceof SpeechDiarizationFuture) {
+            } else if (future instanceof SpeechDiarizationFuture) {
                 VoiceDiarization result = new VoiceDiarization(data);
                 if (null == result.file) {
                     throw new IllegalArgumentException("Missing diarization file");
@@ -3442,8 +3443,7 @@ public class Manager implements Tickable, PerformerListener {
                 SpeechDiarizationFuture f = (SpeechDiarizationFuture) future;
                 f.diarization = result;
                 f.stateCode = AIGCStateCode.Ok;
-            }
-            else if (future instanceof FacialExpressionRecognitionFuture) {
+            } else if (future instanceof FacialExpressionRecognitionFuture) {
                 FacialExpressionResult result = new FacialExpressionResult(data);
                 FacialExpressionRecognitionFuture f = (FacialExpressionRecognitionFuture) future;
                 f.result = result;

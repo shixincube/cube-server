@@ -341,6 +341,16 @@ public class AIGCCellet extends AbstractCellet {
         ActionDialect dialect = new ActionDialect(primitive);
         String action = dialect.getName();
 
+        if (AIGCAction.ChatCompletionEvent.name.equals(action)) {
+            this.service.getCompletions().onUnitEvent(talkContext, dialect);
+            return;
+        }
+        if (AIGCAction.ChatCompletion.name.equals(action) || AIGCAction.CancelChatCompletion.name.equals(action)
+                || AIGCAction.ListChatModels.name.equals(action)) {
+            this.execute(new ChatCompletionTask(this, talkContext, primitive, this.markResponseTime(action)));
+            return;
+        }
+
         // 业务模块派发：未命中时立即返回 false，继续走下方的动作分支，行为不变。
         // 应答阻塞分支（Responder.NotifierKey）优先级最高，此处显式排除，确保它不会被业务模块劫持。
         if (!dialect.containsParam(Responder.NotifierKey) && this.dispatchToModule(talkContext, primitive, dialect)) {

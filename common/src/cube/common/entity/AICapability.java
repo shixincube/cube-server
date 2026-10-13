@@ -40,6 +40,9 @@ public class AICapability implements JSONable {
 
     private final String description;
 
+    /** Optional protocol capabilities; older units declare none. */
+    private volatile JSONObject chatCompletion = new JSONObject();
+
     public AICapability(String name, String task, String version, List<String> subtasks, String description) {
         this.name = name;
         this.task = task;
@@ -65,6 +68,9 @@ public class AICapability implements JSONable {
         }
 
         this.description = json.getString("description");
+        if (json.optJSONObject("chatCompletion") != null) {
+            this.chatCompletion = new JSONObject(json.getJSONObject("chatCompletion").toString());
+        }
     }
 
     public String getName() {
@@ -91,6 +97,14 @@ public class AICapability implements JSONable {
         return this.description;
     }
 
+    public JSONObject getChatCompletion() {
+        return new JSONObject(this.chatCompletion.toString());
+    }
+
+    public void setChatCompletion(JSONObject capability) {
+        this.chatCompletion = new JSONObject(capability.toString());
+    }
+
     @Override
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
@@ -110,6 +124,9 @@ public class AICapability implements JSONable {
         }
 
         json.put("description", this.description);
+        if (this.chatCompletion.length() != 0) {
+            json.put("chatCompletion", getChatCompletion());
+        }
         return json;
     }
 

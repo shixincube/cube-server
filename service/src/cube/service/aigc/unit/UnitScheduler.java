@@ -97,7 +97,7 @@ public class UnitScheduler {
     }
 
     /**
-     * 注册单元。已存在的单元仅更新其通信上下文。
+     * 注册单元。已存在的单元更新通信上下文和可选协议能力。
      *
      * @param contact      联系人。
      * @param capabilities 能力列表。
@@ -112,6 +112,7 @@ public class UnitScheduler {
             AIGCUnit unit = this.unitMap.get(key);
             if (null != unit) {
                 unit.setContext(context);
+                unit.getCapability().setChatCompletion(capability.getChatCompletion());
             }
             else {
                 unit = new AIGCUnit(contact, capability, context);

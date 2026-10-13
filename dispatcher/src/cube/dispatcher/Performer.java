@@ -291,11 +291,12 @@ public class Performer implements TalkListener, Tickable {
 
     /**
      * 添加 Director 节点。
-     * @param address 导演机的地址。
-     * @param port 导演机的端口。
+     *
+     * @param address   导演机的地址。
+     * @param port      导演机的端口。
      * @param fsAddress 文件系统地址。
-     * @param fsPort 文件系统端口。
-     * @param scope 该导演机的配置范围。
+     * @param fsPort    文件系统端口。
+     * @param scope     该导演机的配置范围。
      * @return 返回导演机节点。
      */
     public Director addDirector(String address, int port, String fsAddress, int fsPort, Scope scope) {
@@ -325,7 +326,7 @@ public class Performer implements TalkListener, Tickable {
      * 选择节点。
      *
      * @param talkContext 会话上下文。
-     * @param celletName Cellet 名称。
+     * @param celletName  Cellet 名称。
      * @return 返回被选中的导演机。
      */
     private synchronized Director selectDirector(TalkContext talkContext, String celletName) {
@@ -367,7 +368,7 @@ public class Performer implements TalkListener, Tickable {
     /**
      * 选择节点。
      *
-     * @param tokenCode 令牌码。
+     * @param tokenCode  令牌码。
      * @param celletName Cellet 名称。
      * @return 返回被选中的导演机。
      */
@@ -434,7 +435,7 @@ public class Performer implements TalkListener, Tickable {
      * 更新联系人。
      *
      * @param contact 指定联系人。
-     * @param device 指定当前设备。
+     * @param device  指定当前设备。
      */
     public void updateContact(Contact contact, Device device) {
         // 记录 Token 对应的设备
@@ -443,8 +444,7 @@ public class Performer implements TalkListener, Tickable {
         Contact current = this.onlineContacts.get(contact.getUniqueKey());
         if (null == current) {
             this.onlineContacts.put(contact.getUniqueKey(), contact);
-        }
-        else {
+        } else {
             current.setName(contact.getName());
 
             JSONObject ctx = contact.getContext();
@@ -488,7 +488,9 @@ public class Performer implements TalkListener, Tickable {
         this.listenerMap.put(celletName, listener);
     }
 
-    /** 注销指定监听器，不移除已经被替换的监听器。 */
+    /**
+     * 注销指定监听器，不移除已经被替换的监听器。
+     */
     public boolean removeListener(String celletName, PerformerListener listener) {
         return null != celletName && null != listener && this.listenerMap.remove(celletName, listener);
     }
@@ -544,8 +546,7 @@ public class Performer implements TalkListener, Tickable {
         }
         if (this.properties.getProperty("threadpool.type", "cached").equalsIgnoreCase("cached")) {
             this.executor = CachedQueueExecutor.newCachedQueueThreadPool(max);
-        }
-        else {
+        } else {
             this.executor = Executors.newFixedThreadPool(max);
         }
         Logger.i(this.getClass(), "#start - The thread pool type: "
@@ -651,7 +652,6 @@ public class Performer implements TalkListener, Tickable {
     }
 
 
-
     /**
      * 指定的令牌是否在当前节点建立连接。
      *
@@ -733,7 +733,9 @@ public class Performer implements TalkListener, Tickable {
         this.tryTransmit(celletName, actionDialect);
     }
 
-    /** 向服务单元发送数据，返回是否成功交给连接发送。 */
+    /**
+     * 向服务单元发送数据，返回是否成功交给连接发送。
+     */
     public boolean tryTransmit(String celletName, ActionDialect actionDialect) {
         if (null == celletName || null == actionDialect) {
             return false;
@@ -747,6 +749,21 @@ public class Performer implements TalkListener, Tickable {
             long sn = actionDialect.containsParam("sn") ?
                     actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
             actionDialect.addParam(this.performerKey, createPerformer(sn));
+            return director.speaker.speak(celletName, actionDialect);
+        } catch (RuntimeException e) {
+            Logger.w(this.getClass(), "#tryTransmit - " + celletName, e);
+            return false;
+        }
+    }
+
+    /**
+     * Send every event/control operation for a request to its original node.
+     */
+    public boolean tryTransmit(Director director, String celletName, ActionDialect actionDialect) {
+        if (director == null || director.speaker == null || actionDialect == null) return false;
+        long sn = actionDialect.containsParam("sn") ? actionDialect.getParamAsLong("sn") : Utils.generateSerialNumber();
+        actionDialect.addParam(this.performerKey, createPerformer(sn));
+        try {
             return director.speaker.speak(celletName, actionDialect);
         } catch (RuntimeException e) {
             Logger.w(this.getClass(), "#tryTransmit - " + celletName, e);
@@ -926,7 +943,7 @@ public class Performer implements TalkListener, Tickable {
         byte[] hashSHA1 = sha1.digest();
         String md5Code = FileUtils.bytesToHexString(hashMD5);
         String sha1Code = FileUtils.bytesToHexString(hashSHA1);
-        return new String[] { md5Code, sha1Code };
+        return new String[]{md5Code, sha1Code};
     }
 
     /**
@@ -1003,7 +1020,7 @@ public class Performer implements TalkListener, Tickable {
         return this.syncTransmit(this.selectDirector(), celletName, actionDialect, timeout);
     }
 
-    protected ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect, long timeout) {
+    public ActionDialect syncTransmit(Director director, String celletName, ActionDialect actionDialect, long timeout) {
         if (null == director || null == director.speaker || null == actionDialect) {
             return null;
         }
@@ -1107,8 +1124,7 @@ public class Performer implements TalkListener, Tickable {
                             block.dialect = actionDialect;
                         }
                     }
-                }
-                else {
+                } else {
                     Transmission transmission = this.transmissionMap.get(sn);
                     if (null != transmission) {
                         // 移除 P-KEY
@@ -1116,16 +1132,14 @@ public class Performer implements TalkListener, Tickable {
                         // 向客户端发送数据
                         transmission.cellet.speak(transmission.source,
                                 this.processResponse(actionDialect));
-                    }
-                    else {
+                    } else {
                         PerformerListener listener = this.listenerMap.get(celletName);
                         if (null != listener) {
                             listener.onReceived(celletName, primitive);
                         }
                     }
                 }
-            }
-            else if (actionDialect.containsParam(this.directorKey)) {
+            } else if (actionDialect.containsParam(this.directorKey)) {
                 JSONObject director = actionDialect.getParamAsJson(this.directorKey);
                 // 移除 D-KEY
                 actionDialect.removeParam(this.directorKey);
@@ -1151,20 +1165,17 @@ public class Performer implements TalkListener, Tickable {
                                 cellet.speak(dev.getTalkContext(), this.processResponse(actionDialect));
                             }
                         }
-                    }
-                    else {
+                    } else {
                         // 指定设备
                         Device dev = contact.getDevice(device);
                         if (null != dev && dev.isOnline()) {
                             cellet.speak(dev.getTalkContext(), this.processResponse(actionDialect));
                         }
                     }
-                }
-                else {
+                } else {
                     Logger.w(this.getClass(), "Can NOT find online contact or cellet : " + key + " | " + celletName);
                 }
-            }
-            else {
+            } else {
                 PerformerListener listener = this.listenerMap.get(celletName);
                 if (null != listener) {
                     listener.onReceived(celletName, primitive);
