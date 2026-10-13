@@ -3061,8 +3061,8 @@ public class AIGCStorage implements Storagable {
 
         parameter = new JSONObject();
         parameter.put("unit", "Baize2");
-        ModelConfig baize2 = new ModelConfig("BaizeX", "BaizeX",
-                "适合复杂场景且速度较快的通用模型",
+        ModelConfig baize2 = new ModelConfig("Baize2", "Baize2",
+                "适合复杂场景且速度较快的多模态模型",
                 "http://127.0.0.1:7010/aigc/chat/", parameter);
 
         // 重置列表
@@ -3104,7 +3104,7 @@ public class AIGCStorage implements Storagable {
                 new StorageField("modified", System.currentTimeMillis())
         });
 
-        // BaizeX
+        // Baize2
         result = this.storage.executeQuery(this.appConfigTable, this.appConfigFields, new Conditional[] {
                 Conditional.createEqualTo("item", baize2.getName())
         });
@@ -3116,7 +3116,7 @@ public class AIGCStorage implements Storagable {
         this.storage.executeInsert(this.appConfigTable, new StorageField[] {
                 new StorageField("item", baize2.getName()),
                 new StorageField("value", JSONStorageUtils.encode(baize2.toJSON())),
-                new StorageField("comment", "适合复杂场景且速度较快的通用模型"),
+                new StorageField("comment", "适合复杂场景且速度较快的多模态模型"),
                 new StorageField("modified", System.currentTimeMillis())
         });
     }
