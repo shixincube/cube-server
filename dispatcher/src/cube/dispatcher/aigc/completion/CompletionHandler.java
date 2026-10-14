@@ -38,6 +38,9 @@ import java.util.concurrent.TimeUnit;
  * No request state is stored on this shared handler.
  */
 public final class CompletionHandler extends ContextHandler {
+    /** 当前唯一受支持的 Anthropic API 版本。 */
+    private static final String ANTHROPIC_VERSION = "2023-06-01";
+
     private final CompletionBackend backend;
     private final CompletionConfig config;
     private ScheduledThreadPoolExecutor timer;
@@ -88,13 +91,15 @@ public final class CompletionHandler extends ContextHandler {
 
     private void handleRequest(HttpServletRequest request, HttpServletResponse response) throws IOException {
         String path = request.getRequestURI().substring(request.getContextPath().length());
-        boolean claude = path.equals("/messages") || (path.startsWith("/models") && request.getHeader("anthropic-version") != null);
+        // /messages 只能是 Claude 格式；/models 仅在版本头受支持时才按 Claude 解析，
+        // 否则降级为 OpenAI 格式，避免网关透传的未知版本直接 400。
+        boolean claude = path.equals("/messages") || (path.startsWith("/models") && claudeVersion(request));
         try {
             if (!config.enabled) throw new CompletionError(404, "not_found", "Compatibility routes are disabled", null);
-            if (claude && !"2023-06-01".equals(request.getHeader("anthropic-version"))) {
-                throw CompletionError.invalid("anthropic-version must be 2023-06-01", "anthropic-version");
+            if (claude && path.equals("/messages") && !ANTHROPIC_VERSION.equals(request.getHeader("anthropic-version"))) {
+                throw CompletionError.invalid("anthropic-version must be " + ANTHROPIC_VERSION, "anthropic-version");
             }
-            String token = claude ? request.getHeader("x-api-key") : bearer(request.getHeader("Authorization"));
+            String token = credential(request);
             if (token == null || token.trim().isEmpty()) throw new CompletionError(401,
                     "authentication_error", "A Cube token is required", null);
             response.setHeader("request-id", UUID.randomUUID().toString());
@@ -206,6 +211,22 @@ public final class CompletionHandler extends ContextHandler {
 
     private static String bearer(String value) {
         return value != null && value.regionMatches(true, 0, "Bearer ", 0, 7) ? value.substring(7).trim() : null;
+    }
+
+    /** 版本头存在且等于受支持版本时，才按 Claude 原生格式处理。 */
+    private static boolean claudeVersion(HttpServletRequest request) {
+        return ANTHROPIC_VERSION.equals(request.getHeader("anthropic-version"));
+    }
+
+    /**
+     * 提取访问令牌。Claude 走 {@code x-api-key}，OpenAI 走 {@code Authorization: Bearer}；
+     * 两者互为回退，客户端只带其中任一种均可通过。
+     */
+    private static String credential(HttpServletRequest request) {
+        String key = request.getHeader("x-api-key"), authorization = bearer(request.getHeader("Authorization"));
+        if (key != null && !key.trim().isEmpty()) return key.trim();
+        if (authorization != null && !authorization.trim().isEmpty()) return authorization.trim();
+        return null;
     }
 
     private JSONObject readBody(HttpServletRequest request) throws IOException {

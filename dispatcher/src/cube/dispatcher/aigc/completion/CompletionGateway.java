@@ -103,52 +103,74 @@ public final class CompletionGateway implements CompletionBackend {
             this.listener = listener;
         }
 
+        /**
+         * 推进事件序列并在锁外投递。
+         *
+         * <p>锁序恒为 {@code delivery → this}；{@code listener.onEvent} 一律在
+         * 两把锁都释放之后调用，避免把监听方（HTTP 会话）的锁等待与写耗时
+         * 包进本网关锁内。</p>
+         */
         void accept(JSONObject event) {
-            synchronized (delivery) {
-                try {
-                    synchronized (this) {
-                        if (terminal) return;
-                        long next = CompletionResult.tokens(event, "sequence");
-                        if (next == 0) throw new IllegalArgumentException("Invalid event sequence");
-                        if (next <= sequence) return;
-                        if (next != sequence + 1) throw new IllegalArgumentException("Event sequence interrupted");
-                        String kind = event.getString("kind");
-                        if (!kind.equals("started") && !kind.equals("delta") && !kind.equals("completed") && !kind.equals("error")) {
-                            throw new IllegalArgumentException("Unknown event");
-                        }
-                        event.getJSONObject("payload");
-                        sequence = next;
-                        terminal = kind.equals("completed") || kind.equals("error");
-                        if (terminal) requests.remove(id, this);
-                    }
-                    listener.onEvent(event);
-                } catch (RuntimeException error) {
-                    failure(new CompletionError(502, "upstream_error", "Invalid generation event", null));
-                }
-            }
+            if (!deliver(event, true)) failure(new CompletionError(502, "upstream_error", "Invalid generation event", null));
         }
 
         void failure(CompletionError error) {
-            synchronized (delivery) {
-                JSONObject event;
-                synchronized (this) {
-                    if (terminal) return;
-                    cancel();
-                    event = new JSONObject().put("requestId", id).put("sequence", ++sequence)
-                            .put("kind", "error").put("payload", new JSONObject().put("error", error.toJSON()));
-                }
-                listener.onEvent(event);
-            }
+            deliver(new JSONObject().put("requestId", id).put("sequence", ++sequence)
+                    .put("kind", "error").put("payload", new JSONObject().put("error", error.toJSON())), false);
         }
 
+        /**
+         * 在锁内推进状态、锁外回调监听方。
+         *
+         * @param event  待投递事件
+         * @param strict true 为上游事件（校验序列并推进）；false 为本地失败事件
+         * @return true 表示已投递或无需投递；false 表示需转入失败流程
+         */
+        private boolean deliver(JSONObject event, boolean strict) {
+            ActionDialect cancellation = null;
+            synchronized (delivery) {
+                synchronized (this) {
+                    if (terminal) return true;
+                    if (strict) {
+                        long next = CompletionResult.tokens(event, "sequence");
+                        if (next == 0) return false;
+                        // 重复投递（重传）静默忽略，序列缺口才判为上游异常。
+                        if (next <= sequence) return true;
+                        if (next != sequence + 1) return false;
+                        String kind = event.getString("kind");
+                        if (!kind.equals("started") && !kind.equals("delta")
+                                && !kind.equals("completed") && !kind.equals("error")) return false;
+                        event.getJSONObject("payload");
+                        sequence = next;
+                        terminal = kind.equals("completed") || kind.equals("error");
+                    } else {
+                        terminal = true;
+                        cancellation = new Packet(AIGCAction.CancelChatCompletion.name,
+                                new JSONObject().put("requestId", id)).toDialect();
+                        cancellation.addParam("token", token);
+                    }
+                    if (terminal) requests.remove(id, this);
+                }
+            }
+            if (null != cancellation) owner.tryTransmit(director, AIGCCellet.NAME, cancellation);
+            listener.onEvent(event);
+            return true;
+        }
+
+        /** 锁序与 {@link #deliver} 一致：{@code delivery → this}；发送在锁外。 */
         @Override
-        public synchronized void cancel() {
-            if (terminal) return;
-            terminal = true;
-            requests.remove(id, this);
-            ActionDialect dialect = new Packet(AIGCAction.CancelChatCompletion.name,
-                    new JSONObject().put("requestId", id)).toDialect();
-            dialect.addParam("token", token);
+        public void cancel() {
+            ActionDialect dialect;
+            synchronized (delivery) {
+                synchronized (this) {
+                    if (terminal) return;
+                    terminal = true;
+                    requests.remove(id, this);
+                    dialect = new Packet(AIGCAction.CancelChatCompletion.name,
+                            new JSONObject().put("requestId", id)).toDialect();
+                    dialect.addParam("token", token);
+                }
+            }
             owner.tryTransmit(director, AIGCCellet.NAME, dialect);
         }
     }

@@ -343,7 +343,11 @@ public final class CompletionProtocol {
         private int nextBlock;
         private Integer textBlock;
         private final Map<Integer, ToolState> tools = new TreeMap<>();
-        private final List<Integer> blocks = new ArrayList<>();
+        /** 当前仍打开的块；Claude 流式要求块严格嵌套，故同一时刻至多一个。 */
+        private Integer open;
+        /** 已开启块的签名序列，用于与终态结果对账。 */
+        private final List<String> streamed = new ArrayList<>();
+        private int textBlocks;
         private final MessageDigest textDigest;
         private long toolBytes;
 
@@ -381,9 +385,9 @@ public final class CompletionProtocol {
             if (delta.has("content") && !delta.isNull("content") && !delta.getString("content").isEmpty()) {
                 if (claude && textBlock == null) {
                     textBlock = nextBlock++;
-                    blocks.add(textBlock);
-                    frames.append(event("content_block_start", new JSONObject().put("index", textBlock)
-                            .put("content_block", new JSONObject().put("type", "text").put("text", ""))));
+                    ++this.textBlocks;
+                    this.streamed.add("text");
+                    frames.append(openBlock(textBlock, new JSONObject().put("type", "text").put("text", "")));
                 }
                 if (claude) frames.append(event("content_block_delta", new JSONObject().put("index", textBlock)
                         .put("delta", new JSONObject().put("type", "text_delta").put("text", delta.getString("content")))));
@@ -429,10 +433,9 @@ public final class CompletionProtocol {
             if (tool.block == null) {
                 textBlock = null;
                 tool.block = nextBlock++;
-                blocks.add(tool.block);
-                frames.append(event("content_block_start", new JSONObject().put("index", tool.block)
-                        .put("content_block", new JSONObject().put("type", "tool_use").put("id", tool.id)
-                                .put("name", tool.name).put("input", new JSONObject()))));
+                streamed.add("tool:" + tool.id);
+                frames.append(openBlock(tool.block, new JSONObject().put("type", "tool_use").put("id", tool.id)
+                        .put("name", tool.name).put("input", new JSONObject())));
             }
             if (tool.arguments.length() > tool.sent) {
                 frames.append(event("content_block_delta", new JSONObject().put("index", tool.block)
@@ -441,6 +444,53 @@ public final class CompletionProtocol {
                 tool.sent = tool.arguments.length();
             }
             return frames.toString();
+        }
+
+        /**
+         * 与终态结果对账：已发出的块序列必须与 result 声明的内容块一致。
+         *
+         * <p>result 携带 {@code content_blocks} 时以其为权威基准；否则退化为
+         * 「文本块至多一个 + 工具块数量与 id 顺序一致」的弱校验。</p>
+         */
+        private void verifyStreamed(JSONObject result) {
+            JSONArray declared = result.optJSONArray("content_blocks");
+            if (declared != null) {
+                if (declared.length() != streamed.size()) throw invalidStream();
+                for (int i = 0; i < declared.length(); ++i) {
+                    JSONObject block = declared.getJSONObject(i);
+                    String expected = "text".equals(block.optString("type"))
+                            ? "text" : "tool:" + block.optString("id");
+                    if (!expected.equals(streamed.get(i))) throw invalidStream();
+                }
+                return;
+            }
+            JSONArray calls = result.getJSONObject("message").optJSONArray("tool_calls");
+            int expectedTools = calls == null ? 0 : calls.length();
+            if (this.textBlocks + expectedTools != streamed.size()) throw invalidStream();
+            int seen = 0;
+            for (String signature : streamed) {
+                if (signature.startsWith("tool:") && !signature.substring(5)
+                        .equals(calls.getJSONObject(seen++).getString("id"))) throw invalidStream();
+            }
+        }
+
+        /**
+         * 开启一个内容块。Claude 流式要求块严格嵌套，故先关闭仍打开的前一个块。
+         */
+        private String openBlock(int index, JSONObject block) {
+            StringBuilder frames = new StringBuilder(closeOpen());
+            open = index;
+            frames.append(event("content_block_start", new JSONObject().put("index", index)
+                    .put("content_block", block)));
+            return frames.toString();
+        }
+
+        /** 关闭当前打开的块；无打开块时返回空串。 */
+        private String closeOpen() {
+            if (null == open) return "";
+            Integer index = open;
+            open = null;
+            return event("content_block_stop", new JSONObject().put("index", index));
         }
 
         public String complete(JSONObject result) {
@@ -479,8 +529,19 @@ public final class CompletionProtocol {
                     frames.append(toolDelta(tool));
                 }
             }
-            for (Integer index : blocks)
-                frames.append(event("content_block_stop", new JSONObject().put("index", index)));
+            //终态未流式送出的文本块在此补齐：以 message.content 为唯一基准。
+            String text = message.isNull("content") ? "" : message.getString("content");
+            if (!text.isEmpty() && this.textBlocks == 0) {
+                textBlock = nextBlock++;
+                ++this.textBlocks;
+                streamed.add("text");
+                frames.append(openBlock(textBlock, new JSONObject().put("type", "text").put("text", "")));
+                frames.append(event("content_block_delta", new JSONObject().put("index", textBlock)
+                        .put("delta", new JSONObject().put("type", "text_delta").put("text", text))));
+            }
+            if (!text.isEmpty() && this.textBlocks != 1) throw invalidStream();
+            this.verifyStreamed(result);
+            frames.append(closeOpen());
             JSONObject usage = result.getJSONObject("usage");
             frames.append(event("message_delta", new JSONObject().put("delta", new JSONObject()
                             .put("stop_reason", stopReason(result)).put("stop_sequence", result.opt("stop_sequence") == null ? JSONObject.NULL : result.get("stop_sequence")))

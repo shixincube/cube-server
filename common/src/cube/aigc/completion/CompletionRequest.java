@@ -1,14 +1,24 @@
+/*
+ * This source file is part of Cube.
+ *
+ * Copyright (c) 2023-2025 Ambrose Xu.
+ */
+
 package cube.aigc.completion;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
-/** Canonical structured messages, tools and generation options. */
+/**
+ * Canonical structured messages, tools and generation options.
+ */
 public final class CompletionRequest {
-    private CompletionRequest() {}
+    private CompletionRequest() {
+    }
 
     public static void validate(JSONObject request) {
         text(request, "model");
@@ -37,11 +47,9 @@ public final class CompletionRequest {
             Object content = message.opt("content");
             if (content == null || content == JSONObject.NULL) {
                 if (calls == null) throw CompletionError.invalid("Message content is required", "messages");
-            }
-            else if (content instanceof JSONArray) {
+            } else if (content instanceof JSONArray) {
                 blocks((JSONArray) content, role.equals("user") || role.equals("tool"));
-            }
-            else if (!(content instanceof String)) {
+            } else if (!(content instanceof String)) {
                 throw CompletionError.invalid("Invalid message content", "messages");
             }
             if (role.equals("tool") && !pending.remove(text(message, "tool_call_id"))) {
@@ -62,8 +70,11 @@ public final class CompletionRequest {
                     only(function, "messages", "name", "arguments");
                     text(function, "name");
                     String arguments = text(function, "arguments");
-                    try { new JSONObject(arguments); }
-                    catch (RuntimeException e) { throw CompletionError.invalid("Tool arguments must be a JSON object", "messages"); }
+                    try {
+                        new JSONObject(arguments);
+                    } catch (RuntimeException e) {
+                        throw CompletionError.invalid("Tool arguments must be a JSON object", "messages");
+                    }
                 }
             }
         }
@@ -128,15 +139,14 @@ public final class CompletionRequest {
                     if (!value.equals("none") && !value.equals("auto") && !value.equals("required")) {
                         throw CompletionError.invalid("Invalid tool_choice", key);
                     }
-                    if (!value.equals("none") && names.isEmpty()) throw CompletionError.invalid("tool_choice requires tools", key);
-                }
-                else if (value instanceof JSONObject) {
+                    if (!value.equals("none") && names.isEmpty())
+                        throw CompletionError.invalid("tool_choice requires tools", key);
+                } else if (value instanceof JSONObject) {
                     JSONObject choice = (JSONObject) value, function = choice.optJSONObject("function");
                     if (!"function".equals(choice.optString("type")) || function == null || !names.contains(function.optString("name"))) {
                         throw CompletionError.invalid("tool_choice must select a declared function", key);
                     }
-                }
-                else throw CompletionError.invalid("Invalid tool_choice", key);
+                } else throw CompletionError.invalid("Invalid tool_choice", key);
             }
         }
         if (options.has("max_tokens") && options.has("max_completion_tokens")
@@ -146,7 +156,8 @@ public final class CompletionRequest {
     }
 
     public static void checkCapabilities(JSONObject request, JSONObject capability) {
-        if (!capability.optBoolean("text", false)) throw CompletionError.invalid("Model does not support structured chat", "model");
+        if (!capability.optBoolean("text", false))
+            throw CompletionError.invalid("Model does not support structured chat", "model");
         if (request.optBoolean("stream", false) && !capability.optBoolean("stream", false)) {
             throw CompletionError.invalid("Model does not support streaming", "stream");
         }
@@ -185,7 +196,8 @@ public final class CompletionRequest {
     }
 
     private static boolean defaultOption(String key, Object value, JSONObject request) {
-        if ((key.equals("presence_penalty") || key.equals("frequency_penalty")) && value instanceof Number) return ((Number) value).doubleValue() == 0;
+        if ((key.equals("presence_penalty") || key.equals("frequency_penalty")) && value instanceof Number)
+            return ((Number) value).doubleValue() == 0;
         boolean noTools = request.optJSONArray("tools") == null || request.getJSONArray("tools").length() == 0;
         return noTools && ((key.equals("tool_choice") && value.equals("none"))
                 || (key.equals("parallel_tool_calls") && Boolean.TRUE.equals(value)));
@@ -198,8 +210,7 @@ public final class CompletionRequest {
             if ("text".equals(part.optString("type"))) {
                 only(part, "messages", "type", "text");
                 if (!(part.opt("text") instanceof String)) throw CompletionError.invalid("Missing text", "messages");
-            }
-            else if (images && "image_url".equals(part.optString("type"))) {
+            } else if (images && "image_url".equals(part.optString("type"))) {
                 JSONObject image = part.optJSONObject("image_url");
                 only(part, "messages", "type", "image_url");
                 if (image == null) throw CompletionError.invalid("Missing image_url", "messages");
@@ -209,20 +220,23 @@ public final class CompletionRequest {
                     URI uri = URI.create(url);
                     if (url.startsWith("data:image/")) {
                         int comma = url.indexOf(',');
-                        if (comma < 0 || !url.substring(0, comma).matches("data:image/(png|jpeg|gif|webp);base64")) throw new IllegalArgumentException();
-                        if (java.util.Base64.getDecoder().decode(url.substring(comma + 1)).length == 0) throw new IllegalArgumentException();
+                        if (comma < 0 || !url.substring(0, comma).matches("data:image/(png|jpeg|gif|webp);base64"))
+                            throw new IllegalArgumentException();
+                        if (java.util.Base64.getDecoder().decode(url.substring(comma + 1)).length == 0)
+                            throw new IllegalArgumentException();
                     }
                     if (!url.startsWith("data:image/") &&
                             !(("http".equalsIgnoreCase(uri.getScheme()) || "https".equalsIgnoreCase(uri.getScheme())) && uri.getHost() != null)) {
                         throw new IllegalArgumentException();
                     }
-                } catch (IllegalArgumentException e) { throw CompletionError.invalid("Invalid image URL", "messages"); }
+                } catch (IllegalArgumentException e) {
+                    throw CompletionError.invalid("Invalid image URL", "messages");
+                }
                 String detail = image.optString("detail", "auto");
                 if (!detail.equals("auto") && !detail.equals("low") && !detail.equals("high")) {
                     throw CompletionError.invalid("Invalid image detail", "messages");
                 }
-            }
-            else throw CompletionError.invalid("Unsupported content block", "messages");
+            } else throw CompletionError.invalid("Unsupported content block", "messages");
         }
     }
 
@@ -236,9 +250,10 @@ public final class CompletionRequest {
 
     public static void only(JSONObject json, String param, String... keys) {
         Set<String> allowed = new HashSet<>(java.util.Arrays.asList(keys));
-        for (String key : json.keySet()) if (!allowed.contains(key) && !json.isNull(key)) {
-            throw CompletionError.invalid("Unsupported parameter: " + key, param);
-        }
+        for (String key : json.keySet())
+            if (!allowed.contains(key) && !json.isNull(key)) {
+                throw CompletionError.invalid("Unsupported parameter: " + key, param);
+            }
     }
 
     public static void bool(JSONObject json, String key) {

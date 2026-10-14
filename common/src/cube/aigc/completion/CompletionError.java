@@ -1,8 +1,16 @@
+/*
+ * This source file is part of Cube.
+ *
+ * Copyright (c) 2023-2025 Ambrose Xu.
+ */
+
 package cube.aigc.completion;
 
 import org.json.JSONObject;
 
-/** Transport-independent error; adapters supply each provider's envelope. */
+/**
+ * Transport-independent error; adapters supply each provider's envelope.
+ */
 public class CompletionError extends RuntimeException {
     public final int status;
     public final String code;

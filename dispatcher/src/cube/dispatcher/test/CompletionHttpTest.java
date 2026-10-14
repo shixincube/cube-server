@@ -132,6 +132,50 @@ public final class CompletionHttpTest {
         check(CompletionProtocol.result(interleaved, true, "msg_test", "Baize2", 1).getJSONArray("content").getJSONObject(1).getString("type").equals("tool_use"), "terminal response preserves content order");
     }
 
+    /** 打开一个 Claude 格式请求（x-api-key + anthropic-version）。 */
+    static HttpURLConnection claude(String url, JSONObject body) throws IOException {
+        HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
+        connection.setReadTimeout(5000);
+        connection.setRequestProperty("x-api-key", "test-token");
+        connection.setRequestProperty("anthropic-version", "2023-06-01");
+        if (body != null) {
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setRequestProperty("Content-Type", "application/json");
+            try (OutputStream output = connection.getOutputStream()) {
+                output.write(body.toString().getBytes(StandardCharsets.UTF_8));
+            }
+        }
+        return connection;
+    }
+
+    /**
+     * 校验 Claude SSE 的 content_block 严格嵌套：每个 start 必须先于其 delta，
+     * 且下一个 start 之前必须已收到上一个块的 stop。
+     */
+    static void checkBlockNesting(String stream, String label) {
+        int open = -1, index = -1, stops = 0, starts = 0;
+        for (String line : stream.split("\n")) {
+            if (!line.startsWith("data: ")) continue;
+            JSONObject frame = new JSONObject(line.substring(6));
+            String type = frame.optString("type");
+            if ("content_block_start".equals(type)) {
+                check(open < 0, label + ": start must not overlap an open block");
+                open = index = frame.getInt("index");
+                ++starts;
+                check(index == starts - 1, label + ": block index must be sequential");
+            } else if ("content_block_delta".equals(type)) {
+                check(open >= 0 && frame.getInt("index") == open, label + ": delta must target the open block");
+            } else if ("content_block_stop".equals(type)) {
+                check(open >= 0 && frame.getInt("index") == open, label + ": stop must close the open block");
+                open = -1;
+                ++stops;
+            }
+        }
+        check(open < 0, label + ": every started block must be closed");
+        check(starts > 0 && starts == stops, label + ": start/stop count must match");
+    }
+
     static HttpURLConnection open(String url, JSONObject body) throws IOException {
         HttpURLConnection connection = (HttpURLConnection) new URL(url).openConnection();
         connection.setReadTimeout(5000);
@@ -216,6 +260,62 @@ public final class CompletionHttpTest {
         String overflowResult = read(overflow);
         check(overflowResult.contains("buffer_overflow"), "bounded buffer rejects oversized events");
         check(backend.active.get() == 0, "overflow cancellation");
+        claudeTests(url);
+    }
+
+    /** Claude 格式端到端：纯文本、文本+工具混合、终态不带 content_blocks。 */
+    static void claudeTests(String url) throws Exception {
+        // Claude 格式强制要求 max_tokens，与 OpenAI 不同。
+        String plain = read(claude(url + "/v1/messages", body("claude-text", true).put("max_tokens", 64)));
+        check(plain.contains("event: message_start"), "claude stream opens with message_start");
+        check(plain.contains("event: message_stop"), "claude stream ends with message_stop");
+        check(plain.contains("echo:claude-text"), "claude text delta forwarded");
+        checkBlockNesting(plain, "claude plain text");
+
+        // 终态不带 content_blocks：文本块必须由 message.content 重建并正确收尾。
+        String mixed = read(claude(url + "/v1/messages", body("mixed", true).put("max_tokens", 64)));
+        checkBlockNesting(mixed, "claude mixed");
+        check(mixed.contains("\"text\":\"before\""), "mixed keeps streamed text");
+        check(mixed.contains("\"tool_use\""), "mixed emits tool_use block");
+        check(mixed.contains("\"stop_reason\":\"tool_use\""), "tool_calls maps to tool_use stop reason");
+        check(mixed.indexOf("echo") < 0, "mixed must not echo the prompt");
+
+        // 纯工具调用（content 为 null）不得凭空造出文本块。
+        String toolsOnly = read(claude(url + "/v1/messages", body("claude-tools", true).put("max_tokens", 64)));
+        checkBlockNesting(toolsOnly, "claude tools only");
+
+        HttpURLConnection claudeModels = (HttpURLConnection) new URL(url + "/v1/models").openConnection();
+        claudeModels.setReadTimeout(5000);
+        claudeModels.setRequestProperty("x-api-key", "test-token");
+        claudeModels.setRequestProperty("anthropic-version", "2023-06-01");
+        JSONObject nativeModels = new JSONObject(read(claudeModels));
+        check("model".equals(nativeModels.getJSONArray("data").getJSONObject(0).getString("type")),
+                "claude model list uses native model type");
+        check(nativeModels.has("has_more") && nativeModels.has("first_id"), "claude model list pagination fields");
+
+        // 未知 anthropic-version 必须降级为 OpenAI 格式，而不是 400。
+        HttpURLConnection downgraded = (HttpURLConnection) new URL(url + "/v1/models").openConnection();
+        downgraded.setReadTimeout(5000);
+        downgraded.setRequestProperty("x-api-key", "test-token");
+        downgraded.setRequestProperty("anthropic-version", "2023-01-01");
+        JSONObject fallback = new JSONObject(read(downgraded));
+        check("model".equals(fallback.getJSONArray("data").getJSONObject(0).getString("object")),
+                "unknown anthropic-version falls back to the OpenAI shape");
+        check(!fallback.has("has_more"), "fallback omits Anthropic pagination fields");
+
+        // /messages 不接受降级：版本头非法仍须 400。
+        HttpURLConnection bad = (HttpURLConnection) new URL(url + "/v1/messages").openConnection();
+        bad.setReadTimeout(5000);
+        bad.setRequestMethod("POST");
+        bad.setDoOutput(true);
+        bad.setRequestProperty("Content-Type", "application/json");
+        bad.setRequestProperty("x-api-key", "test-token");
+        bad.setRequestProperty("anthropic-version", "1999-01-01");
+        try (OutputStream output = bad.getOutputStream()) {
+            output.write(body("x", true).put("max_tokens", 8).toString().getBytes(StandardCharsets.UTF_8));
+        }
+        check(bad.getResponseCode() == 400, "/messages rejects an unsupported anthropic-version");
+        check(read(bad).contains("anthropic-version"), "rejection names the offending header");
     }
 
     public static final class FakeBackend implements CompletionBackend {
@@ -269,7 +369,13 @@ public final class CompletionHttpTest {
                 }
                 boolean tools = request.optJSONArray("tools") != null && request.getJSONArray("tools").length() > 0 && !last.getString("role").equals("tool");
                 String answer = "echo:" + text;
-                JSONObject message = new JSONObject().put("role", "assistant").put("content", tools ? JSONObject.NULL : answer);
+                boolean mixed = text.equals("mixed");
+                JSONObject message = new JSONObject().put("role", "assistant").put("content", (tools || mixed) ? JSONObject.NULL : answer);
+                if (mixed) {
+                    message.put("content", "before");
+                    message.put("tool_calls", new JSONArray().put(new JSONObject().put("id", "call_test").put("type", "function")
+                            .put("function", new JSONObject().put("name", "lookup").put("arguments", "{\"city\":\"Beijing\"}"))));
+                }
                 if (tools) {
                     String name = request.getJSONArray("tools").getJSONObject(0).getJSONObject("function").getString("name");
                     message.put("tool_calls", new JSONArray().put(new JSONObject().put("id", "call_test").put("type", "function")
@@ -283,7 +389,13 @@ public final class CompletionHttpTest {
                         emit.accept("delta", new JSONObject().put("delta", new JSONObject().put("content", new String(huge))));
                         return;
                     }
-                    if (tools) {
+                    if (text.equals("mixed")) {
+                        // 先文本、再工具：用于验证 content_block 严格嵌套（stop 必须先于下一个 start）。
+                        emit.accept("delta", new JSONObject().put("delta", new JSONObject().put("content", "before")));
+                        emit.accept("delta", new JSONObject().put("delta", new JSONObject().put("tool_calls", new JSONArray().put(new JSONObject()
+                                .put("index", 0).put("id", "call_test").put("type", "function")
+                                .put("function", new JSONObject().put("name", "lookup").put("arguments", "{\"city\":\"Beijing\"}"))))));
+                    } else if (tools) {
                         JSONObject call = message.getJSONArray("tool_calls").getJSONObject(0);
                         emit.accept("delta", new JSONObject().put("delta", new JSONObject().put("tool_calls", new JSONArray().put(new JSONObject()
                                 .put("index", 0).put("id", "call_test").put("type", "function")
@@ -298,7 +410,7 @@ public final class CompletionHttpTest {
                         emit.accept("error", new JSONObject().put("error", new CompletionError(502, "upstream_error", "Controlled mid-stream failure", null).toJSON()));
                     else
                         emit.accept("completed", new JSONObject().put("result", new JSONObject().put("message", message)
-                                .put("finish_reason", tools ? "tool_calls" : "stop").put("usage", new JSONObject().put("prompt_tokens", 11).put("completion_tokens", 3).put("total_tokens", 14))));
+                                .put("finish_reason", (tools || mixed) ? "tool_calls" : "stop").put("usage", new JSONObject().put("prompt_tokens", 11).put("completion_tokens", 3).put("total_tokens", 14))));
                 }, 350, TimeUnit.MILLISECONDS);
             }, 20, TimeUnit.MILLISECONDS);
             return cancel;
