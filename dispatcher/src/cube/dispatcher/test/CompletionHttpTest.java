@@ -100,6 +100,7 @@ public final class CompletionHttpTest {
     }
 
     static void protocolTests() {
+        toolAndStopProtocolTests();
         JSONObject request = new JSONObject("{\"model\":\"Baize2\",\"max_tokens\":30,\"system\":[{\"type\":\"text\",\"text\":\"sys\"}],\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"a\"},{\"type\":\"image\",\"source\":{\"type\":\"url\",\"url\":\"https://example.com/1.png\"}}]},{\"role\":\"assistant\",\"content\":[{\"type\":\"text\",\"text\":\"before\"},{\"type\":\"tool_use\",\"id\":\"call_a\",\"name\":\"lookup\",\"input\":{\"q\":\"x\"}},{\"type\":\"text\",\"text\":\"after\"}]},{\"role\":\"user\",\"content\":[{\"type\":\"tool_result\",\"tool_use_id\":\"call_a\",\"content\":[{\"type\":\"text\",\"text\":\"result\"},{\"type\":\"image\",\"source\":{\"type\":\"url\",\"url\":\"https://example.com/2.png\"}}]},{\"type\":\"text\",\"text\":\"continue\"}]}]}");
         JSONObject normalized = CompletionProtocol.normalize(request, true);
         JSONArray messages = normalized.getJSONArray("messages");
@@ -130,6 +131,57 @@ public final class CompletionHttpTest {
                         .put(new JSONObject().put("type", "tool_use").put("id", "c1").put("name", "f").put("input", new JSONObject()))
                         .put(new JSONObject().put("type", "text").put("text", "after")));
         check(CompletionProtocol.result(interleaved, true, "msg_test", "Baize2", 1).getJSONArray("content").getJSONObject(1).getString("type").equals("tool_use"), "terminal response preserves content order");
+    }
+
+    static void toolAndStopProtocolTests() {
+        for (String type : Arrays.asList("auto", "none", "any", "tool")) {
+            for (boolean disabled : Arrays.asList(false, true)) {
+                JSONObject choice = new JSONObject().put("type", type).put("disable_parallel_tool_use", disabled);
+                if (type.equals("tool")) choice.put("name", "weather");
+                JSONObject input = body("tools", false).put("max_tokens", 40).put("tools", new JSONArray().put(
+                        new JSONObject().put("name", "weather").put("input_schema", new JSONObject().put("type", "object"))))
+                        .put("tool_choice", choice);
+                JSONObject options = CompletionProtocol.normalize(input, true).getJSONObject("options");
+                check(options.getBoolean("parallel_tool_calls") == !disabled, "Claude parallel setting maps exactly");
+                if (type.equals("tool")) check(options.getJSONObject("tool_choice").getJSONObject("function")
+                        .getString("name").equals("weather"), "Claude named tool mapping");
+                else check(options.getString("tool_choice").equals(type.equals("any") ? "required" : type),
+                        "Claude selection mapping");
+            }
+        }
+        for (Object choice : Arrays.asList("auto", "none", "required", new JSONObject().put("type", "function")
+                .put("function", new JSONObject().put("name", "weather")))) {
+            JSONObject input = body("tools", true).put("tools", new JSONArray().put(new JSONObject().put("type", "function")
+                    .put("function", new JSONObject().put("name", "weather").put("parameters", new JSONObject().put("type", "object")))))
+                    .put("tool_choice", choice).put("parallel_tool_calls", false);
+            JSONObject options = CompletionProtocol.normalize(input, false).getJSONObject("options");
+            check(options.get("tool_choice").toString().equals(choice.toString()) && !options.getBoolean("parallel_tool_calls"),
+                    "OpenAI tool controls survive normalization");
+        }
+        for (String finish : Arrays.asList("stop", "length")) {
+            for (boolean matched : Arrays.asList(false, true)) {
+                if (matched && !finish.equals("stop")) continue;
+                JSONObject result = new JSONObject().put("message", new JSONObject().put("role", "assistant").put("content", "ALPHA "))
+                        .put("finish_reason", finish).put("usage", new JSONObject().put("prompt_tokens", 17).put("completion_tokens", 5).put("total_tokens", 22));
+                if (matched) result.put("stop_sequence", "STOP");
+                String reason = matched ? "stop_sequence" : finish.equals("length") ? "max_tokens" : "end_turn";
+                JSONObject message = CompletionProtocol.result(result, true, "msg_stop", "Baize2", 1);
+                check(message.getString("stop_reason").equals(reason) &&
+                        (matched ? message.getString("stop_sequence").equals("STOP") : message.isNull("stop_sequence")), "Claude JSON stop metadata");
+                CompletionProtocol.Stream stream = new CompletionProtocol.Stream(true, body("stop", true), "msg_stop", 1);
+                stream.delta(new JSONObject().put("content", "ALPHA "));
+                JSONObject terminal = null;
+                String frames = stream.complete(result);
+                for (String line : frames.split("\n")) if (line.startsWith("data: ")) {
+                    JSONObject event = new JSONObject(line.substring(6));
+                    if (event.optString("type").equals("message_delta")) terminal = event;
+                }
+                check(terminal != null && terminal.getJSONObject("delta").getString("stop_reason").equals(reason), "Claude SSE stop reason");
+                check(matched ? terminal.getJSONObject("delta").getString("stop_sequence").equals("STOP")
+                        : terminal.getJSONObject("delta").isNull("stop_sequence"), "Claude SSE matched string");
+                check(terminal.getJSONObject("usage").getInt("input_tokens") == 17 && frames.contains("event: message_stop"), "stop preserves usage and lifecycle");
+            }
+        }
     }
 
     /** 打开一个 Claude 格式请求（x-api-key + anthropic-version）。 */
@@ -367,8 +419,10 @@ public final class CompletionHttpTest {
                     emit.accept("error", new JSONObject().put("error", new CompletionError(502, "upstream_error", "Controlled failure", null).toJSON()));
                     return;
                 }
-                boolean tools = request.optJSONArray("tools") != null && request.getJSONArray("tools").length() > 0 && !last.getString("role").equals("tool");
-                String answer = "echo:" + text;
+                Object choice = request.getJSONObject("options").opt("tool_choice");
+                boolean tools = request.optJSONArray("tools") != null && request.getJSONArray("tools").length() > 0 && !last.getString("role").equals("tool")
+                        && !"none".equals(choice);
+                String answer = text.equals("stop-metadata") ? "ALPHA " : "echo:" + text;
                 boolean mixed = text.equals("mixed");
                 JSONObject message = new JSONObject().put("role", "assistant").put("content", (tools || mixed) ? JSONObject.NULL : answer);
                 if (mixed) {
@@ -378,6 +432,7 @@ public final class CompletionHttpTest {
                 }
                 if (tools) {
                     String name = request.getJSONArray("tools").getJSONObject(0).getJSONObject("function").getString("name");
+                    if (choice instanceof JSONObject) name = ((JSONObject) choice).getJSONObject("function").getString("name");
                     message.put("tool_calls", new JSONArray().put(new JSONObject().put("id", "call_test").put("type", "function")
                             .put("function", new JSONObject().put("name", name).put("arguments", "{\"city\":\"Beijing\"}"))));
                 }
@@ -408,9 +463,12 @@ public final class CompletionHttpTest {
                 executor.schedule(() -> {
                     if (text.equals("fail-after"))
                         emit.accept("error", new JSONObject().put("error", new CompletionError(502, "upstream_error", "Controlled mid-stream failure", null).toJSON()));
-                    else
-                        emit.accept("completed", new JSONObject().put("result", new JSONObject().put("message", message)
-                                .put("finish_reason", (tools || mixed) ? "tool_calls" : "stop").put("usage", new JSONObject().put("prompt_tokens", 11).put("completion_tokens", 3).put("total_tokens", 14))));
+                    else {
+                        JSONObject result = new JSONObject().put("message", message)
+                                .put("finish_reason", (tools || mixed) ? "tool_calls" : "stop").put("usage", new JSONObject().put("prompt_tokens", 11).put("completion_tokens", 3).put("total_tokens", 14));
+                        if (text.equals("stop-metadata")) result.put("stop_sequence", "STOP");
+                        emit.accept("completed", new JSONObject().put("result", result));
+                    }
                 }, 350, TimeUnit.MILLISECONDS);
             }, 20, TimeUnit.MILLISECONDS);
             return cancel;

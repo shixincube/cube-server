@@ -53,6 +53,7 @@ public final class ChatCompletionServiceTest {
             testEvents(service, cellet);
             testCancellation(service, cellet);
             testMalformedAndTimeout(service, cellet);
+            testTwelveUnits();
             service.getCompletions().stop();
             check(service.getCompletions().activeRequests() == 0, "stop clears registry");
             until(() -> service.getGenerateTextUnitRealtimeCount().get("Baize2").get() == 0, "stop releases counters");
@@ -239,7 +240,7 @@ public final class ChatCompletionServiceTest {
 
     static final class FakeStorage extends AIGCStorage {
         final AtomicInteger calls = new AtomicInteger();
-        long input, output;
+        long input, output, totalInput, totalOutput;
 
         FakeStorage() {
             super(StorageType.Other, new JSONObject());
@@ -249,12 +250,109 @@ public final class ChatCompletionServiceTest {
         public synchronized Usage updateUsage(long cid, String model, long output, long input) {
             this.input = input;
             this.output = output;
+            this.totalInput += input;
+            this.totalOutput += output;
             calls.incrementAndGet();
             return new Usage(model, input, output, 0);
         }
     }
 
-    static final class FakeService extends AIGCService {
+    static void testTwelveUnits() throws Exception {
+        FakeCellet cellet = new FakeCellet();
+        FleetService service = new FleetService(cellet);
+        Map<String, TalkContext> owners = new LinkedHashMap<>();
+        Set<TalkContext> selected = new HashSet<>();
+        try {
+            check(service.getCompletions().models("token").getJSONArray("models").length() == 2,
+                    "twelve workers expose two model IDs");
+            for (int i = 0; i < 12; ++i) {
+                String id = "fleet-" + i, model = i < 8 ? "Baize" : "Baize2";
+                ActionDialect dialect = new Packet(AIGCAction.ChatCompletion.name, new JSONObject()
+                        .put("requestId", id).put("request", request(model))
+                        .put("timeoutMs", i % 4 == 2 ? 1200 : 5000)).toDialect();
+                dialect.addParam("token", "token");
+                dialect.addParam("_performer", new JSONObject().put("sn", 7).put("ts", 1));
+                service.getCompletions().generate("token", service.origin, dialect);
+                until(() -> cellet.find(id, AIGCAction.ChatCompletion.name) != null, "fleet request dispatched");
+                Sent sent = cellet.find(id, AIGCAction.ChatCompletion.name);
+                owners.put(id, sent.context);
+                check(selected.add(sent.context), "each concurrent request uses an idle worker");
+                check(new Packet(sent.dialect).data.getString("unit").equals(model), "fleet preserves model choice");
+                event(service, service.other, id, 1, "started", new JSONObject());
+                check(cellet.events(id).isEmpty(), "foreign worker cannot emit into a fleet stream");
+                event(service, sent.context, id, 1, "started", new JSONObject());
+                event(service, sent.context, id, 2, "delta", new JSONObject().put("delta", new JSONObject().put("content", id)));
+            }
+            check(service.getCompletions().activeRequests() == 12, "all twelve requests coexist");
+            check(service.getGenerateTextUnitRealtimeCount().get("Baize").get() == 8 &&
+                    service.getGenerateTextUnitRealtimeCount().get("Baize2").get() == 4, "8+4 running counters");
+            // A reconnect must not move an existing request's event/cancellation ownership.
+            for (AIGCUnit unit : service.scheduler.getAll()) unit.setContext(new Context());
+            for (int i = 0; i < 12; ++i) {
+                String id = "fleet-" + i;
+                if (i % 4 == 0) {
+                    service.getCompletions().cancel("token", id, service.origin);
+                    check(cellet.find(id, AIGCAction.CancelChatCompletion.name).context == owners.get(id),
+                            "fleet cancellation uses original connection after reconnect");
+                } else if (i % 4 == 1) {
+                    event(service, owners.get(id), id, 3, "error", new JSONObject().put("error",
+                            new JSONObject().put("status", 502).put("code", "upstream_error").put("message", "controlled failure")));
+                } else if (i % 4 == 3) {
+                    JSONObject result = result();
+                    result.getJSONObject("message").put("content", id);
+                    event(service, owners.get(id), id, 3, "completed", new JSONObject().put("result", result));
+                    event(service, owners.get(id), id, 3, "completed", new JSONObject().put("result", result));
+                }
+            }
+            until(() -> service.getCompletions().activeRequests() == 0, "fleet timeout/cancel/failure clear registry");
+            until(() -> service.getGenerateTextUnitRealtimeCount().get("Baize").get() == 0 &&
+                    service.getGenerateTextUnitRealtimeCount().get("Baize2").get() == 0, "fleet releases both counters");
+            check(service.storage.calls.get() == 3 && service.storage.totalInput == 51 && service.storage.totalOutput == 15,
+                    "only three successful requests settle exact usage once");
+            for (int i = 0; i < 12; ++i) {
+                String id = "fleet-" + i;
+                List<Sent> events = cellet.events(id);
+                JSONObject last = new Packet(events.get(events.size() - 1).dialect).data;
+                check(last.getString("kind").equals(i % 4 == 3 ? "completed" : "error"), "fleet terminal kind");
+                if (i % 4 == 3) check(last.getJSONObject("payload").getJSONObject("result")
+                        .getJSONObject("message").getString("content").equals(id), "fleet results never cross streams");
+                int count = events.size();
+                event(service, owners.get(id), id, 99, "delta", new JSONObject().put("delta", new JSONObject().put("content", "late")));
+                check(cellet.events(id).size() == count, "late fleet event discarded");
+            }
+            for (AIGCUnit unit : service.scheduler.getAll()) check(unit.toJSON().getInt("runningCounter") == 0,
+                    "all individual worker counters released");
+        } finally {
+            service.getCompletions().stop();
+            service.queue.shutdown();
+        }
+    }
+
+    static final class FleetService extends FakeService {
+        final UnitScheduler scheduler = new UnitScheduler();
+
+        FleetService(FakeCellet cellet) throws Exception {
+            super(cellet);
+            for (int i = 0; i < 12; ++i) {
+                AICapability capability = new AICapability(i < 8 ? "Baize" : "Baize2", "Text", "1.0",
+                        Collections.singletonList("FeatureExtraction"), "fleet");
+                capability.setChatCompletion(new JSONObject().put("text", true).put("stream", true)
+                        .put("parameters", new JSONArray()));
+                AIGCUnit unit = scheduler.setup(new Contact(1000L + i, "domain"),
+                        Collections.singletonList(capability), new Context()).get(0);
+                unit.setTimestamp(0); // Workers have completed their registration warmup.
+            }
+        }
+
+        @Override public List<ModelConfig> getModelConfigs() {
+            return Arrays.asList(new ModelConfig("Baize", "Baize", "", "http://localhost/", new JSONObject().put("unit", "Baize")),
+                    new ModelConfig("Baize2", "Baize2", "", "http://localhost/", new JSONObject().put("unit", "Baize2")));
+        }
+        @Override public List<AIGCUnit> getAllUnits() { return scheduler.getAll(); }
+        @Override public AIGCUnit selectUnitByName(String name) { return scheduler.select(name); }
+    }
+
+    static class FakeService extends AIGCService {
         final AIGCTaskExecutor queue;
         final FakeStorage storage = new FakeStorage();
         final Context owner = new Context(), other = new Context(), origin = new Context();
